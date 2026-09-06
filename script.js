@@ -567,10 +567,17 @@ function makeStripCanvas() {
     state.stickers[i].forEach((st) => {
       const sx = (st.x / 100) * w;
       const sy = y + (st.y / 100) * shotH;
-      ctx.font = "28px serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(st.emoji, sx, sy);
+      if (st.type === "image" && st.src) {
+        const stickerImg = new Image();
+        stickerImg.src = st.src;
+        const sW = 60, sH = (stickerImg.naturalHeight / stickerImg.naturalWidth) * sW || 50;
+        ctx.drawImage(stickerImg, sx - sW / 2, sy - sH / 2, sW, sH);
+      } else {
+        ctx.font = "28px serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(st.emoji, sx, sy);
+      }
     });
     ctx.strokeStyle = f.slotBorder;
     ctx.lineWidth = 2;
@@ -618,16 +625,49 @@ const STICKER_EMOJIS = [
   "\uD83C\uDF08", "\uD83C\uDFB8", "\uD83C\uDFA8", "\uD83C\uDFB5", "\uD83C\uDF3A",
   "\uD83E\uDD8B", "\uD83C\uDF80", "\u2B50", "\uD83D\uDCAB", "\uD83D\uDC96"
 ];
+
+const STICKER_IMAGES = [
+  { file: "659080345_17884126899535655_6546928519517393912_n.png" },
+  { file: "671840327_17884127115535655_385812773339957926_n.png" },
+  { file: "672350594_17884127187535655_371724488335205445_n.png" },
+  { file: "675348103_17884127124535655_5996297521590930211_n.png" },
+  { file: "797596608_17907094689496248_8185925733102920979_n.png" },
+  { file: "797596629_17907094728496248_6891190330387094743_n.png" },
+  { file: "797991785_17907094776496248_1606891135962767612_n.png" },
+  { file: "798115213_17907094608496248_8525871069148600826_n.png" },
+  { file: "798245961_17907094317496248_1018965147158772015_n.png" },
+  { file: "798432346_17907094338496248_4089780847253085097_n.png" },
+  { file: "798432347_17907094710496248_5327990706809132554_n.png" },
+  { file: "798432368_17907094671496248_2649935818652428654_n.png" },
+  { file: "798537744_17907094626496248_472267872383870736_n.png" }
+];
+
 function buildStickerPalette() {
   const palette = $("#sticker-palette");
   palette.innerHTML = "";
+
   STICKER_EMOJIS.forEach((emoji) => {
     const el = document.createElement("div");
-    el.className = "sticker-item";
+    el.className = "sticker-item sticker-emoji";
     el.textContent = emoji;
     el.draggable = true;
     el.addEventListener("dragstart", (e) => {
-      e.dataTransfer.setData("text/plain", emoji);
+      e.dataTransfer.setData("text/plain", JSON.stringify({ type: "emoji", emoji }));
+      e.dataTransfer.effectAllowed = "copy";
+    });
+    palette.appendChild(el);
+  });
+
+  STICKER_IMAGES.forEach((img) => {
+    const el = document.createElement("div");
+    el.className = "sticker-item sticker-img-item";
+    el.draggable = true;
+    const thumb = document.createElement("img");
+    thumb.src = "stickers/thumbs/" + img.file;
+    thumb.draggable = false;
+    el.appendChild(thumb);
+    el.addEventListener("dragstart", (e) => {
+      e.dataTransfer.setData("text/plain", JSON.stringify({ type: "image", src: "stickers/resized/" + img.file }));
       e.dataTransfer.effectAllowed = "copy";
     });
     palette.appendChild(el);
@@ -646,15 +686,20 @@ function initStickerDrop() {
     slot.addEventListener("drop", (e) => {
       e.preventDefault();
       slot.classList.remove("drag-over");
-      const emoji = e.dataTransfer.getData("text/plain");
-      if (!emoji) return;
+      let raw;
+      try { raw = JSON.parse(e.dataTransfer.getData("text/plain")); } catch { return; }
+      if (!raw) return;
       const i = parseInt(slot.dataset.i);
       const rect = slot.getBoundingClientRect();
       const x = ((e.clientX - rect.left) / rect.width) * 100;
       const y = ((e.clientY - rect.top) / rect.height) * 100;
       const cx = Math.max(5, Math.min(95, x));
       const cy = Math.max(5, Math.min(95, y));
-      state.stickers[i].push({ emoji, x: cx, y: cy });
+      if (raw.type === "image") {
+        state.stickers[i].push({ type: "image", src: raw.src, x: cx, y: cy });
+      } else {
+        state.stickers[i].push({ type: "emoji", emoji: raw.emoji, x: cx, y: cy });
+      }
       renderSlotStickers(i);
     });
   });
@@ -667,10 +712,20 @@ function renderSlotStickers(i) {
   container.innerHTML = "";
   state.stickers[i].forEach((st, si) => {
     const el = document.createElement("div");
-    el.className = "slot-sticker";
+    const isImg = st.type === "image";
+    el.className = "slot-sticker" + (isImg ? " slot-sticker-img" : "");
     el.style.left = st.x + "%";
     el.style.top = st.y + "%";
-    el.textContent = st.emoji;
+    if (isImg) {
+      const img = document.createElement("img");
+      img.src = st.src;
+      img.style.width = "40px";
+      img.style.height = "auto";
+      img.style.pointerEvents = "none";
+      el.appendChild(img);
+    } else {
+      el.textContent = st.emoji;
+    }
     const del = document.createElement("span");
     del.className = "sticker-delete";
     del.textContent = "\u2715";
