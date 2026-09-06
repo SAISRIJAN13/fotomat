@@ -235,6 +235,7 @@ function buildFilters() {
 function setFilter(i) {
   state.activeFilter = i;
   $$(".filter-swatch").forEach((s, idx) => s.classList.toggle("active", idx === i));
+  video.style.filter = buildCSSFilter(FILTERS[i]);
 }
 
 /* ============================================================
@@ -249,6 +250,7 @@ async function startCamera() {
     });
     video.srcObject = state.stream;
     await video.play();
+    video.style.filter = buildCSSFilter(FILTERS[state.activeFilter]);
     shutter.disabled = false;
     setTimerPill("Ready", false);
   } catch (err) {
@@ -260,6 +262,7 @@ async function startCamera() {
 function stopCamera() {
   if (state.stream) { state.stream.getTracks().forEach((t) => t.stop()); state.stream = null; }
   video.srcObject = null;
+  video.style.filter = "none";
   shutter.disabled = true;
   setTimerPill("Stopped", true);
 }
@@ -278,6 +281,7 @@ $("#shutter").addEventListener("click", async () => {
       });
       video.srcObject = state.stream;
       await video.play();
+      video.style.filter = buildCSSFilter(FILTERS[state.activeFilter]);
       shutter.disabled = false;
       setTimerPill("Ready", false);
     } catch (err) {
@@ -377,6 +381,7 @@ $("#reset").addEventListener("click", () => {
   refreshStrip();
   hideBigTimer();
   stopCamera();
+  video.style.filter = "none";
   setTimerPill("Click Take 4 Shots to start", true);
 });
 
