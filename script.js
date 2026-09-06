@@ -531,7 +531,7 @@ resetStripBtn.addEventListener("click", () => {
   setTimerPill("Ready", false);
 });
 function makeStripCanvas() {
-  const w = 480, shotH = w * 3 / 4, h = shotH * 4 + 60;
+  const w = 480, pad = 10, shotH = (w - pad * 2) * 3 / 4, h = shotH * 4 + pad * 2 + 60;
   const c = document.createElement("canvas"); c.width = w; c.height = h;
   const ctx = c.getContext("2d");
   const f = FILM_STYLES[state.film] || FILM_STYLES.classic;
@@ -603,9 +603,9 @@ function makeStripCanvas() {
 
   /* draw slot backgrounds and photos */
   state.photos.forEach((src, i) => {
-    const y = i * shotH;
+    const y = pad + i * shotH;
     /* draw slot background */
-    drawBackground(f.slot, 0, y, w, shotH);
+    drawBackground(f.slot, pad, y, w - pad * 2, shotH);
 
     /* draw emoji overlay in slot */
     if (f.emojiBg) {
@@ -614,7 +614,7 @@ function makeStripCanvas() {
       const count = 8 + Math.floor(Math.random() * 6);
       for (let j = 0; j < count; j++) {
         const em = f.emojiBg[Math.floor(Math.random() * f.emojiBg.length)];
-        const ex = Math.random() * w;
+        const ex = pad + Math.random() * (w - pad * 2);
         const ey = y + Math.random() * shotH;
         const size = 12 + Math.floor(Math.random() * 10);
         ctx.font = size + "px serif";
@@ -635,7 +635,7 @@ function makeStripCanvas() {
       ctx.globalAlpha = 0.7;
       const dotSize = 3;
       const spacing = 10;
-      for (let px = 0; px < w; px += spacing) {
+      for (let px = pad; px < w - pad; px += spacing) {
         for (let py = y; py < y + shotH; py += spacing) {
           const dotColor = f.polka.dots[Math.floor(Math.random() * f.polka.dots.length)];
           ctx.fillStyle = dotColor;
@@ -649,11 +649,11 @@ function makeStripCanvas() {
 
     /* draw photo */
     const img = new Image(); img.src = src;
-    ctx.drawImage(img, 0, y, w, shotH);
+    ctx.drawImage(img, pad, y, w - pad * 2, shotH);
 
     /* draw stickers */
     state.stickers[i].forEach((st) => {
-      const sx = (st.x / 100) * w;
+      const sx = pad + (st.x / 100) * (w - pad * 2);
       const sy = y + (st.y / 100) * shotH;
       if (st.type === "image" && st.src) {
         const stickerImg = new Image();
@@ -671,11 +671,11 @@ function makeStripCanvas() {
     /* draw slot border */
     ctx.strokeStyle = f.slotBorder;
     ctx.lineWidth = 2;
-    ctx.strokeRect(0, y, w, shotH);
+    ctx.strokeRect(pad, y, w - pad * 2, shotH);
   });
 
   /* draw footer */
-  const footerY = shotH * 4;
+  const footerY = pad + shotH * 4;
   drawBackground(f.footerBg, 0, footerY, w, 60);
   ctx.fillStyle = "#1e6dbf"; ctx.font = "bold 16px 'Segoe UI', sans-serif";
   ctx.textAlign = "center";
