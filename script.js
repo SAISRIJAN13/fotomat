@@ -570,42 +570,27 @@ function makeStripCanvas() {
   /* 1. Draw strip frame background (full canvas) */
   drawBackground(f.frame, 0, 0, w, totalH);
 
-  /* 2. Draw emoji background on frame */
+  /* 2. Draw emoji background on frame — same tiled pattern as on-screen */
   if (f.emojiBg) {
+    var emojiPat = makeEmojiPattern(f.emojiBg, 120, 120, 0.18);
+    var emojiImg = new Image(); emojiImg.src = emojiPat;
     ctx.save();
-    ctx.globalAlpha = 0.18;
-    var cnt = 40 + Math.floor(Math.random() * 20);
-    for (var ei = 0; ei < cnt; ei++) {
-      var em = f.emojiBg[Math.floor(Math.random() * f.emojiBg.length)];
-      var ex = Math.random() * w;
-      var ey = Math.random() * totalH;
-      var sz = 16 + Math.floor(Math.random() * 14);
-      ctx.font = sz + "px serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.save();
-      ctx.translate(ex, ey);
-      ctx.rotate((Math.random() - 0.5) * 0.6);
-      ctx.fillText(em, 0, 0);
-      ctx.restore();
-    }
+    ctx.globalAlpha = 1;
+    var pat = ctx.createPattern(emojiImg, "repeat");
+    ctx.fillStyle = pat;
+    ctx.fillRect(0, 0, w, totalH);
     ctx.restore();
   }
 
-  /* 3. Draw polka dot background on frame */
+  /* 3. Draw polka dot background on frame — same tiled pattern as on-screen */
   if (f.polka) {
+    var polkaPat = makePolkaPattern(f.polka.bg, f.polka.dots, 60, 60, 4);
+    var polkaImg = new Image(); polkaImg.src = polkaPat;
     ctx.save();
-    ctx.globalAlpha = 0.8;
-    var pdSize = 4;
-    var pdSpacing = 12;
-    for (var px = 0; px < w; px += pdSpacing) {
-      for (var py = 0; py < totalH; py += pdSpacing) {
-        ctx.fillStyle = f.polka.dots[Math.floor(Math.random() * f.polka.dots.length)];
-        ctx.beginPath();
-        ctx.arc(px, py, pdSize, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
+    ctx.globalAlpha = 1;
+    var pat = ctx.createPattern(polkaImg, "repeat");
+    ctx.fillStyle = pat;
+    ctx.fillRect(0, 0, w, totalH);
     ctx.restore();
   }
 
@@ -621,42 +606,27 @@ function makeStripCanvas() {
     /* draw slot background (full slot area — shows behind photo as border) */
     drawBackground(f.slot, pad, slotY, slotW, shotH);
 
-    /* draw emoji overlay in slot */
+    /* draw emoji overlay in slot — same tiled pattern as on-screen */
     if (f.emojiBg) {
+      var slotEmojiPat = makeEmojiPattern(f.emojiBg, 80, 80, 0.22);
+      var slotEmojiImg = new Image(); slotEmojiImg.src = slotEmojiPat;
       ctx.save();
-      ctx.globalAlpha = 0.22;
-      var sc = 8 + Math.floor(Math.random() * 6);
-      for (var si = 0; si < sc; si++) {
-        var se = f.emojiBg[Math.floor(Math.random() * f.emojiBg.length)];
-        var sex = pad + Math.random() * slotW;
-        var sey = slotY + Math.random() * shotH;
-        var ssz = 12 + Math.floor(Math.random() * 10);
-        ctx.font = ssz + "px serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.save();
-        ctx.translate(sex, sey);
-        ctx.rotate((Math.random() - 0.5) * 0.5);
-        ctx.fillText(se, 0, 0);
-        ctx.restore();
-      }
+      ctx.globalAlpha = 1;
+      var ePat = ctx.createPattern(slotEmojiImg, "repeat");
+      ctx.fillStyle = ePat;
+      ctx.fillRect(pad, slotY, slotW, shotH);
       ctx.restore();
     }
 
-    /* draw polka dots in slot */
+    /* draw polka dots in slot — same tiled pattern as on-screen */
     if (f.polka) {
+      var slotPolkaPat = makePolkaPattern(f.polka.bg, f.polka.dots, 50, 50, 3);
+      var slotPolkaImg = new Image(); slotPolkaImg.src = slotPolkaPat;
       ctx.save();
-      ctx.globalAlpha = 0.7;
-      var ps = 3;
-      var pspace = 10;
-      for (var spx = pad; spx < pad + slotW; spx += pspace) {
-        for (var spy = slotY; spy < slotY + shotH; spy += pspace) {
-          ctx.fillStyle = f.polka.dots[Math.floor(Math.random() * f.polka.dots.length)];
-          ctx.beginPath();
-          ctx.arc(spx, spy, ps, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
+      ctx.globalAlpha = 1;
+      var pPat = ctx.createPattern(slotPolkaImg, "repeat");
+      ctx.fillStyle = pPat;
+      ctx.fillRect(pad, slotY, slotW, shotH);
       ctx.restore();
     }
 
