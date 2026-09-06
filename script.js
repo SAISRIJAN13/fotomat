@@ -536,21 +536,27 @@ function makeStripCanvas() {
   const ctx = c.getContext("2d");
   const f = FILM_STYLES[state.film] || FILM_STYLES.classic;
 
-  /* parse gradient string or solid color */
+  /* parse gradient string or solid color — handles "linear-gradient(180deg, #a 0%, #b 100%)" */
   function drawBackground(style, x, y, width, height) {
     if (!style) { ctx.fillStyle = "#e0e4ea"; ctx.fillRect(x, y, width, height); return; }
     const gradMatch = style.match(/linear-gradient\(([^)]+)\)/);
     if (gradMatch) {
       const parts = gradMatch[1].split(",").map(s => s.trim());
       const angle = parts[0].includes("deg") ? parseFloat(parts[0]) : 180;
-      const colors = parts.filter(p => p.startsWith("#"));
+      const colorParts = parts.filter(p => p.includes("#"));
       const rad = (angle - 90) * Math.PI / 180;
       const cx1 = x + width / 2 - Math.cos(rad) * width;
       const cy1 = y + height / 2 - Math.sin(rad) * height;
       const cx2 = x + width / 2 + Math.cos(rad) * width;
       const cy2 = y + height / 2 + Math.sin(rad) * height;
       const grad = ctx.createLinearGradient(cx1, cy1, cx2, cy2);
-      colors.forEach((col, i) => { grad.addColorStop(i / Math.max(colors.length - 1, 1), col); });
+      colorParts.forEach((cp, i) => {
+        const hexMatch = cp.match(/#[0-9a-fA-F]{3,8}/);
+        const col = hexMatch ? hexMatch[0] : cp;
+        const pctMatch = cp.match(/(\d+(?:\.\d+)?)\s*%/);
+        const pct = pctMatch ? parseFloat(pctMatch[1]) / 100 : i / Math.max(colorParts.length - 1, 1);
+        grad.addColorStop(pct, col);
+      });
       ctx.fillStyle = grad;
     } else {
       ctx.fillStyle = style;
@@ -558,7 +564,7 @@ function makeStripCanvas() {
     ctx.fillRect(x, y, width, height);
   }
 
-  /* draw strip frame background */
+  /* draw strip frame background (full canvas) */
   drawBackground(f.frame, 0, 0, w, h);
 
   /* draw emoji background if present */
@@ -601,7 +607,12 @@ function makeStripCanvas() {
     ctx.restore();
   }
 
-  /* draw slot backgrounds and photos */
+  /* preload all photo images, then draw everything */
+  const loadedPhotos = state.photos.map(src => {
+    const img = new Image(); img.src = src; return img;
+  });
+
+  /* draw slot backgrounds, photos, stickers, borders */
   state.photos.forEach((src, i) => {
     const y = pad + i * shotH;
     /* draw slot background */
@@ -648,8 +659,7 @@ function makeStripCanvas() {
     }
 
     /* draw photo */
-    const img = new Image(); img.src = src;
-    ctx.drawImage(img, pad, y, w - pad * 2, shotH);
+    ctx.drawImage(loadedPhotos[i], pad, y, w - pad * 2, shotH);
 
     /* draw stickers */
     state.stickers[i].forEach((st) => {
