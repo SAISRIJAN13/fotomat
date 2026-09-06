@@ -412,31 +412,50 @@ function applyFilterToPixels(ctx, w, h, p) {
     d[i+2] = Math.min(255, Math.max(0, b * 255));
   }
   ctx.putImageData(img, 0, 0);
-  if (p.blur > 0) {
-    const passes = Math.ceil(p.blur * 6);
-    for (let pass = 0; pass < passes; pass++) boxBlur(ctx, w, h, 1);
-  }
+  if (p.blur > 0) gaussianBlur(ctx, w, h, p.blur);
   if (p.grain && p.grain > 0) addGrain(ctx, w, h, p.grain);
 }
 
-function boxBlur(ctx, w, h, radius) {
+function gaussianBlur(ctx, w, h, radius) {
+  const sigma = radius / 2;
+  const r = Math.min(Math.ceil(sigma * 2), 3);
   const img = ctx.getImageData(0, 0, w, h);
   const d = img.data;
-  const src = new Uint8ClampedArray(d);
-  const div = radius * 2 + 1;
+  const src = new Float32Array(d.length);
+  for (let i = 0; i < d.length; i++) src[i] = d[i];
+  const size = r * 2 + 1;
+  const kernel = new Float32Array(size);
+  let sum = 0;
+  for (let i = -r; i <= r; i++) {
+    kernel[i + r] = Math.exp(-(i * i) / (2 * sigma * sigma));
+    sum += kernel[i + r];
+  }
+  for (let i = 0; i < size; i++) kernel[i] /= sum;
+  const temp = new Float32Array(d.length);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
-      let sumR = 0, sumG = 0, sumB = 0, sumA = 0;
-      for (let dy = -radius; dy <= radius; dy++) {
-        for (let dx = -radius; dx <= radius; dx++) {
-          const nx = Math.min(w-1, Math.max(0, x+dx));
-          const ny = Math.min(h-1, Math.max(0, y+dy));
-          const idx = (ny * w + nx) * 4;
-          sumR += src[idx]; sumG += src[idx+1]; sumB += src[idx+2]; sumA += src[idx+3];
-        }
+      let rr = 0, gg = 0, bb = 0, aa = 0;
+      for (let dx = -r; dx <= r; dx++) {
+        const nx = Math.min(w - 1, Math.max(0, x + dx));
+        const idx = (y * w + nx) * 4;
+        const k = kernel[dx + r];
+        rr += src[idx] * k; gg += src[idx + 1] * k; bb += src[idx + 2] * k; aa += src[idx + 3] * k;
       }
       const idx = (y * w + x) * 4;
-      d[idx] = sumR / div; d[idx+1] = sumG / div; d[idx+2] = sumB / div; d[idx+3] = sumA / div;
+      temp[idx] = rr; temp[idx + 1] = gg; temp[idx + 2] = bb; temp[idx + 3] = aa;
+    }
+  }
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let rr = 0, gg = 0, bb = 0, aa = 0;
+      for (let dy = -r; dy <= r; dy++) {
+        const ny = Math.min(h - 1, Math.max(0, y + dy));
+        const idx = (ny * w + x) * 4;
+        const k = kernel[dy + r];
+        rr += temp[idx] * k; gg += temp[idx + 1] * k; bb += temp[idx + 2] * k; aa += temp[idx + 3] * k;
+      }
+      const idx = (y * w + x) * 4;
+      d[idx] = Math.min(255, Math.max(0, rr)); d[idx + 1] = Math.min(255, Math.max(0, gg)); d[idx + 2] = Math.min(255, Math.max(0, bb)); d[idx + 3] = aa;
     }
   }
   ctx.putImageData(img, 0, 0);
