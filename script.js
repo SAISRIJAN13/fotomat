@@ -539,7 +539,6 @@ function makeStripCanvas() {
   var ctx = c.getContext("2d");
   var f = FILM_STYLES[state.film] || FILM_STYLES.classic;
 
-  /* parse gradient string or solid color */
   function drawBackground(style, x, y, width, height) {
     if (!style) { ctx.fillStyle = "#e0e4ea"; ctx.fillRect(x, y, width, height); return; }
     var gradMatch = style.match(/linear-gradient\(([^)]+)\)/);
@@ -567,77 +566,63 @@ function makeStripCanvas() {
     ctx.fillRect(x, y, width, height);
   }
 
-  /* 1. Draw strip frame background (full canvas) */
   drawBackground(f.frame, 0, 0, w, totalH);
 
-  /* 2. Draw emoji background on frame — same tiled pattern as on-screen */
   if (f.emojiBg) {
-    var emojiPat = makeEmojiPattern(f.emojiBg, 120, 120, 0.18);
-    var emojiImg = new Image(); emojiImg.src = emojiPat;
+    var emojiTile = makeEmojiPatternCanvas(f.emojiBg, 120, 120, 0.18);
     ctx.save();
     ctx.globalAlpha = 1;
-    var pat = ctx.createPattern(emojiImg, "repeat");
+    var pat = ctx.createPattern(emojiTile, "repeat");
     ctx.fillStyle = pat;
     ctx.fillRect(0, 0, w, totalH);
     ctx.restore();
   }
 
-  /* 3. Draw polka dot background on frame — same tiled pattern as on-screen */
   if (f.polka) {
-    var polkaPat = makePolkaPattern(f.polka.bg, f.polka.dots, 60, 60, 4);
-    var polkaImg = new Image(); polkaImg.src = polkaPat;
+    var polkaTile = makePolkaPatternCanvas(f.polka.bg, f.polka.dots, 60, 60, 4);
     ctx.save();
     ctx.globalAlpha = 1;
-    var pat = ctx.createPattern(polkaImg, "repeat");
-    ctx.fillStyle = pat;
+    var pat2 = ctx.createPattern(polkaTile, "repeat");
+    ctx.fillStyle = pat2;
     ctx.fillRect(0, 0, w, totalH);
     ctx.restore();
   }
 
-  /* preload all photo images */
   var loadedPhotos = state.photos.map(function(src) {
     var img = new Image(); img.src = src; return img;
   });
 
-  /* 4. Draw each slot: background → photo → stickers → border */
   state.photos.forEach(function(src, i) {
     var slotY = pad + i * (shotH + gap);
 
-    /* draw slot background (full slot area — shows behind photo as border) */
     drawBackground(f.slot, pad, slotY, slotW, shotH);
 
-    /* draw emoji overlay in slot — same tiled pattern as on-screen */
     if (f.emojiBg) {
-      var slotEmojiPat = makeEmojiPattern(f.emojiBg, 80, 80, 0.22);
-      var slotEmojiImg = new Image(); slotEmojiImg.src = slotEmojiPat;
+      var slotEmojiTile = makeEmojiPatternCanvas(f.emojiBg, 80, 80, 0.22);
       ctx.save();
       ctx.globalAlpha = 1;
-      var ePat = ctx.createPattern(slotEmojiImg, "repeat");
+      var ePat = ctx.createPattern(slotEmojiTile, "repeat");
       ctx.fillStyle = ePat;
       ctx.fillRect(pad, slotY, slotW, shotH);
       ctx.restore();
     }
 
-    /* draw polka dots in slot — same tiled pattern as on-screen */
     if (f.polka) {
-      var slotPolkaPat = makePolkaPattern(f.polka.bg, f.polka.dots, 50, 50, 3);
-      var slotPolkaImg = new Image(); slotPolkaImg.src = slotPolkaPat;
+      var slotPolkaTile = makePolkaPatternCanvas(f.polka.bg, f.polka.dots, 50, 50, 3);
       ctx.save();
       ctx.globalAlpha = 1;
-      var pPat = ctx.createPattern(slotPolkaImg, "repeat");
+      var pPat = ctx.createPattern(slotPolkaTile, "repeat");
       ctx.fillStyle = pPat;
       ctx.fillRect(pad, slotY, slotW, shotH);
       ctx.restore();
     }
 
-    /* draw photo — inset by innerPad so slot background shows as border */
     var photoX = pad + innerPad;
     var photoY = slotY + innerPad;
     var photoW = slotW - innerPad * 2;
     var photoH = shotH - innerPad * 2;
     ctx.drawImage(loadedPhotos[i], photoX, photoY, photoW, photoH);
 
-    /* draw stickers */
     state.stickers[i].forEach(function(st) {
       var sx = photoX + (st.x / 100) * photoW;
       var sy = photoY + (st.y / 100) * photoH;
@@ -654,13 +639,11 @@ function makeStripCanvas() {
       }
     });
 
-    /* draw slot border */
     ctx.strokeStyle = f.slotBorder;
     ctx.lineWidth = 2;
     ctx.strokeRect(pad, slotY, slotW, shotH);
   });
 
-  /* draw footer */
   var footerY = pad + shotH * 4 + gap * 3;
   drawBackground(f.footerBg, 0, footerY, w, 60);
   ctx.fillStyle = "#1e6dbf"; ctx.font = "bold 16px 'Segoe UI', sans-serif";
@@ -839,7 +822,6 @@ function initTimerButtons() {
    FILM SELECTION
    ============================================================ */
 const FILM_STYLES = {
-  /* ---- solid / gradient films ---- */
   classic:   { frame: "linear-gradient(180deg, #f0f2f6 0%, #e0e4ea 100%)", slot: "linear-gradient(180deg, #1a2030, #0f1824)", slotBorder: "#3a4656", footerBg: "#e0e4ea", footerBorder: "#8a96a4" },
   white:     { frame: "#fdfdfd", slot: "linear-gradient(180deg, #f8f8f8, #eee)", slotBorder: "#ccc", footerBg: "#f5f5f5", footerBorder: "#ddd" },
   pink:      { frame: "linear-gradient(180deg, #fce4ec 0%, #f8bbd0 100%)", slot: "linear-gradient(180deg, #f48fb1, #ec407a)", slotBorder: "#d81b60", footerBg: "#f8bbd0", footerBorder: "#f48fb1" },
@@ -861,7 +843,6 @@ const FILM_STYLES = {
   emerald:   { frame: "linear-gradient(180deg, #e8f5e9 0%, #a5d6a7 50%, #66bb6a 100%)", slot: "linear-gradient(180deg, #2e7d32, #1b5e20)", slotBorder: "#0d3311", footerBg: "#a5d6a7", footerBorder: "#81c784" },
   midnight:  { frame: "linear-gradient(135deg, #0d0d2b 0%, #1a1a4e 30%, #2d1b69 60%, #0d0d2b 100%)", slot: "linear-gradient(135deg, #4a148c, #283593, #1a237e)", slotBorder: "#311b92", footerBg: "#1a1a4e", footerBorder: "#4a148c" },
 
-  /* ---- emoji background films ---- */
   romance:   { frame: "linear-gradient(180deg, #fce4ec 0%, #f8bbd0 100%)", slot: "linear-gradient(180deg, #f48fb1, #ec407a)", slotBorder: "#d81b60", footerBg: "#fce4ec", footerBorder: "#f48fb1", emojiBg: ["\u2764\uFE0F","\uD83D\uDC95","\uD83D\uDC9C","\uD83D\uDC94","\uD83E\uDD0D"] },
   celebration:{ frame: "linear-gradient(180deg, #fff8e1 0%, #ffecb3 100%)", slot: "linear-gradient(180deg, #ffb300, #ff8f00)", slotBorder: "#ff6f00", footerBg: "#fff8e1", footerBorder: "#ffd54f", emojiBg: ["\uD83C\uDF89","\uD83C\uDF8A","\uD83C\uDF88","\uD83C\uDF81","\uD83C\uDF82"] },
   nature:    { frame: "linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%)", slot: "linear-gradient(180deg, #66bb6a, #43a047)", slotBorder: "#2e7d32", footerBg: "#c8e6c9", footerBorder: "#a5d6a7", emojiBg: ["\uD83C\uDF3A","\uD83C\uDF3B","\uD83C\uDF38","\uD83C\uDF3C","\uD83E\uDD8B"] },
@@ -872,13 +853,11 @@ const FILM_STYLES = {
   space:     { frame: "linear-gradient(135deg, #000033 0%, #000066 30%, #000033 60%, #191970 100%)", slot: "linear-gradient(135deg, #1a237e, #0d47a1)", slotBorder: "#0d47a1", footerBg: "#000033", footerBorder: "#1a237e", emojiBg: ["\uD83D\uDE80","\uD83D\uDC0D","\uD83D\uDC0D","\uD83D\uDD2D","\u2604\uFE0F"] },
   emojiRain: { frame: "linear-gradient(180deg, #e3f2fd 0%, #bbdefb 100%)", slot: "linear-gradient(180deg, #42a5f5, #1e88e5)", slotBorder: "#1565c0", footerBg: "#e3f2fd", footerBorder: "#90caf9", emojiBg: ["\uD83D\uDE00","\uD83D\uDE02","\uD83E\uDD29","\uD83E\uDD70","\uD83D\uDE0E","\uD83C\uDF1F","\uD83D\uDC4D","\uD83D\uDD25"] },
 
-  /* ---- polka dot background films ---- */
   polkaPinkBlack:  { frame: "#fce4ec", slot: "linear-gradient(180deg, #f48fb1, #ec407a)", slotBorder: "#d81b60", footerBg: "#fce4ec", footerBorder: "#f48fb1", polka: { bg: "#fce4ec", dots: ["#000000"] } },
   polkaWhiteBlack: { frame: "#ffffff", slot: "linear-gradient(180deg, #f5f5f5, #e0e0e0)", slotBorder: "#9e9e9e", footerBg: "#ffffff", footerBorder: "#bdbdbd", polka: { bg: "#ffffff", dots: ["#000000"] } },
   polkaBlueRed:    { frame: "#1a237e", slot: "linear-gradient(180deg, #1565c0, #0d47a1)", slotBorder: "#0d47a1", footerBg: "#1a237e", footerBorder: "#283593", polka: { bg: "#1a237e", dots: ["#e53935"] } },
   polkaCreamColorful:{ frame: "#fff8e1", slot: "linear-gradient(180deg, #ffb74d, #ff9800)", slotBorder: "#ef6c00", footerBg: "#fff8e1", footerBorder: "#ffd54f", polka: { bg: "#fff8e1", dots: ["#e53935","#1e88e5","#43a047","#fdd835","#ab47bc","#ff7043"] } }
 };
-/* generate a tiled emoji background pattern as a data URL */
 function makeEmojiPattern(emojis, tileW, tileH, alpha) {
   const c = document.createElement("canvas");
   c.width = tileW; c.height = tileH;
@@ -902,7 +881,6 @@ function makeEmojiPattern(emojis, tileW, tileH, alpha) {
   }
   return c.toDataURL();
 }
-/* generate a tiled polka dot background pattern as a data URL */
 function makePolkaPattern(bg, dotColors, tileW, tileH, dotSize) {
   const c = document.createElement("canvas");
   c.width = tileW; c.height = tileH;
@@ -923,6 +901,50 @@ function makePolkaPattern(bg, dotColors, tileW, tileH, dotSize) {
     }
   }
   return c.toDataURL();
+}
+function makeEmojiPatternCanvas(emojis, tileW, tileH, alpha) {
+  const c = document.createElement("canvas");
+  c.width = tileW; c.height = tileH;
+  const ctx = c.getContext("2d");
+  ctx.clearRect(0, 0, tileW, tileH);
+  ctx.globalAlpha = alpha || 0.15;
+  const count = 6 + Math.floor(Math.random() * 4);
+  for (let i = 0; i < count; i++) {
+    const em = emojis[Math.floor(Math.random() * emojis.length)];
+    const x = Math.random() * tileW;
+    const y = Math.random() * tileH;
+    const size = 14 + Math.floor(Math.random() * 12);
+    ctx.font = size + "px serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate((Math.random() - 0.5) * 0.6);
+    ctx.fillText(em, 0, 0);
+    ctx.restore();
+  }
+  return c;
+}
+function makePolkaPatternCanvas(bg, dotColors, tileW, tileH, dotSize) {
+  const c = document.createElement("canvas");
+  c.width = tileW; c.height = tileH;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, tileW, tileH);
+  const spacing = dotSize * 2.5;
+  const rows = Math.ceil(tileH / spacing) + 1;
+  const cols = Math.ceil(tileW / spacing) + 1;
+  for (let r = 0; r < rows; r++) {
+    for (let col = 0; col < cols; col++) {
+      const x = col * spacing + (r % 2 ? spacing / 2 : 0);
+      const y = r * spacing;
+      ctx.beginPath();
+      ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+      ctx.fillStyle = dotColors[Math.floor(Math.random() * dotColors.length)];
+      ctx.fill();
+    }
+  }
+  return c;
 }
 
 function initFilmSelection() {
@@ -976,9 +998,6 @@ function applyFilmStyle(filmKey) {
   });
 }
 
-/* ============================================================
-   INIT
-   ============================================================ */
 (async () => {
   await resumeSessionFromStorage();
 })();
