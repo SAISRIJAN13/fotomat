@@ -131,7 +131,7 @@ function buildCSSFilter(p) {
 /* ============================================================
    State & DOM
    ============================================================ */
-const state = { user: null, photos: [], activeFilter: 0, stream: null, stickers: [[], [], [], []] };
+const state = { user: null, photos: [], activeFilter: 0, stream: null, stickers: [[], [], [], []], timerSec: 10, film: "classic" };
 const $  = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 const video       = $("#video");
@@ -341,11 +341,12 @@ $("#shutter").addEventListener("click", async () => {
   }
   if (shutter.disabled || state.photos.length >= 4) return;
   shutter.disabled = true;
+  const sec = state.timerSec;
   while (state.photos.length < 4) {
     if (state.photos.length > 0) {
-      await showBigCountdown(GAP_SECONDS, "Next shot in");
+      await showBigCountdown(sec, "Next shot in");
     } else {
-      await showBigCountdown(GAP_SECONDS, "Get ready");
+      await showBigCountdown(sec, "Get ready");
     }
     takePhoto();
     refreshStrip();
@@ -496,6 +497,7 @@ function refreshStrip() {
     }
     renderSlotStickers(i);
   });
+  applyFilmStyle(state.film);
   downloadBtn.disabled = state.photos.length === 0;
   downloadSingleBtn.disabled = state.photos.length === 0;
 }
@@ -524,7 +526,9 @@ function makeStripCanvas() {
   const w = 480, shotH = w * 3 / 4, h = shotH * 4 + 60;
   const c = document.createElement("canvas"); c.width = w; c.height = h;
   const ctx = c.getContext("2d");
-  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, w, h);
+  const f = FILM_STYLES[state.film] || FILM_STYLES.classic;
+  ctx.fillStyle = f.frame.includes("gradient") ? "#e0e4ea" : f.frame;
+  ctx.fillRect(0, 0, w, h);
   state.photos.forEach((src, i) => {
     const img = new Image(); img.src = src;
     const y = i * shotH;
@@ -537,7 +541,8 @@ function makeStripCanvas() {
       ctx.textBaseline = "middle";
       ctx.fillText(st.emoji, sx, sy);
     });
-    ctx.strokeStyle = "#dddddd"; ctx.lineWidth = 1;
+    ctx.strokeStyle = f.slotBorder;
+    ctx.lineWidth = 2;
     ctx.strokeRect(0, y, w, shotH);
   });
   const footerY = shotH * 4 + 12;
@@ -652,6 +657,64 @@ function renderAllStickers() {
 }
 
 /* ============================================================
+   TIMER OPTIONS
+   ============================================================ */
+function initTimerButtons() {
+  $$(".timer-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      $$(".timer-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      state.timerSec = parseInt(btn.dataset.sec, 10);
+    });
+  });
+}
+
+/* ============================================================
+   FILM SELECTION
+   ============================================================ */
+const FILM_STYLES = {
+  classic:   { frame: "linear-gradient(180deg, #f0f2f6 0%, #e0e4ea 100%)", slot: "linear-gradient(180deg, #1a2030, #0f1824)", slotBorder: "#3a4656", footerBg: "#e0e4ea", footerBorder: "#8a96a4" },
+  white:     { frame: "#fdfdfd", slot: "linear-gradient(180deg, #f8f8f8, #eee)", slotBorder: "#ccc", footerBg: "#f5f5f5", footerBorder: "#ddd" },
+  pink:      { frame: "linear-gradient(180deg, #fce4ec 0%, #f8bbd0 100%)", slot: "linear-gradient(180deg, #f48fb1, #ec407a)", slotBorder: "#d81b60", footerBg: "#f8bbd0", footerBorder: "#f48fb1" },
+  yellow:    { frame: "linear-gradient(180deg, #fff9c4 0%, #fff176 100%)", slot: "linear-gradient(180deg, #ffee58, #fdd835)", slotBorder: "#f9a825", footerBg: "#fff176", footerBorder: "#ffee58" },
+  red:       { frame: "linear-gradient(180deg, #ffebee 0%, #ffcdd2 100%)", slot: "linear-gradient(180deg, #ef5350, #e53935)", slotBorder: "#c62828", footerBg: "#ffcdd2", footerBorder: "#ef9a9a" },
+  blue:      { frame: "linear-gradient(180deg, #e3f2fd 0%, #bbdefb 100%)", slot: "linear-gradient(180deg, #42a5f5, #1e88e5)", slotBorder: "#1565c0", footerBg: "#bbdefb", footerBorder: "#90caf9" },
+  purple:    { frame: "linear-gradient(180deg, #ede7f6 0%, #d1c4e9 100%)", slot: "linear-gradient(180deg, #7e57c2, #5e35b1)", slotBorder: "#4527a0", footerBg: "#d1c4e9", footerBorder: "#b39ddb" },
+  mint:      { frame: "linear-gradient(180deg, #e0f2f1 0%, #b2dfdb 100%)", slot: "linear-gradient(180deg, #26a69a, #00897b)", slotBorder: "#00695c", footerBg: "#b2dfdb", footerBorder: "#80cbc4" },
+  peach:     { frame: "linear-gradient(180deg, #fff3e0 0%, #ffe0b2 100%)", slot: "linear-gradient(180deg, #ffa726, #fb8c00)", slotBorder: "#ef6c00", footerBg: "#ffe0b2", footerBorder: "#ffcc80" },
+  lavender:  { frame: "linear-gradient(180deg, #f3e5f5 0%, #e1bee7 100%)", slot: "linear-gradient(180deg, #ab47bc, #8e24aa)", slotBorder: "#6a1b9a", footerBg: "#e1bee7", footerBorder: "#ce93d8" },
+  hearts:    { frame: "linear-gradient(180deg, #fce4ec 0%, #f8bbd0 100%)", slot: "linear-gradient(180deg, #f48fb1, #f06292)", slotBorder: "#ec407a", footerBg: "#fce4ec", footerBorder: "#f48fb1" },
+  stars:     { frame: "linear-gradient(180deg, #fff8e1 0%, #ffecb3 100%)", slot: "linear-gradient(180deg, #ffb300, #ff8f00)", slotBorder: "#ff6f00", footerBg: "#ffecb3", footerBorder: "#ffd54f" },
+  confetti:  { frame: "linear-gradient(180deg, #f3e5f5 0%, #e1bee7 50%, #c8e6c9 100%)", slot: "linear-gradient(135deg, #7e57c2, #26a69a, #ef5350)", slotBorder: "#5e35b1", footerBg: "#e1bee7", footerBorder: "#ce93d8" },
+  vintage:   { frame: "linear-gradient(180deg, #efebe9 0%, #d7ccc8 100%)", slot: "linear-gradient(180deg, #8d6e63, #6d4c41)", slotBorder: "#4e342e", footerBg: "#d7ccc8", footerBorder: "#bcaaa4" },
+  galaxy:    { frame: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", slot: "linear-gradient(135deg, #4a148c, #1a237e, #0d47a1)", slotBorder: "#311b92", footerBg: "#1a1a2e", footerBorder: "#4a148c" }
+};
+function initFilmSelection() {
+  $$(".film-swatch").forEach((sw) => {
+    sw.addEventListener("click", () => {
+      $$(".film-swatch").forEach((s) => s.classList.remove("active"));
+      sw.classList.add("active");
+      state.film = sw.dataset.film;
+      applyFilmStyle(state.film);
+    });
+  });
+  applyFilmStyle("classic");
+}
+function applyFilmStyle(filmKey) {
+  const f = FILM_STYLES[filmKey] || FILM_STYLES.classic;
+  const frame = $(".strip-frame");
+  const footer = $(".strip-footer");
+  frame.style.background = f.frame;
+  frame.style.borderColor = f.slotBorder;
+  footer.style.background = f.footerBg;
+  footer.style.borderTop = "1px solid " + f.footerBorder;
+  $$(".strip-slot").forEach((slot) => {
+    slot.style.background = f.slot;
+    slot.style.borderColor = f.slotBorder;
+  });
+}
+
+/* ============================================================
    INIT
    ============================================================ */
 (async () => {
@@ -660,5 +723,7 @@ function renderAllStickers() {
 buildFilters();
 buildStickerPalette();
 initStickerDrop();
+initTimerButtons();
+initFilmSelection();
 stripDate.textContent = formatDate(new Date());
 setTimerPill("Click Take 4 Shots to start", true);
