@@ -815,7 +815,7 @@ const FILM_STYLES = {
   /* ---- polka dot background films ---- */
   polkaPinkBlack:  { frame: "#fce4ec", slot: "linear-gradient(180deg, #f48fb1, #ec407a)", slotBorder: "#d81b60", footerBg: "#fce4ec", footerBorder: "#f48fb1", polka: { bg: "#fce4ec", dots: ["#000000"] } },
   polkaWhiteBlack: { frame: "#ffffff", slot: "linear-gradient(180deg, #f5f5f5, #e0e0e0)", slotBorder: "#9e9e9e", footerBg: "#ffffff", footerBorder: "#bdbdbd", polka: { bg: "#ffffff", dots: ["#000000"] } },
-  polkaBlueRed:    { frame: "#e3f2fd", slot: "linear-gradient(180deg, #42a5f5, #1e88e5)", slotBorder: "#1565c0", footerBg: "#e3f2fd", footerBorder: "#90caf9", polka: { bg: "#e3f2fd", dots: ["#e53935"] } },
+  polkaBlueRed:    { frame: "#1a237e", slot: "linear-gradient(180deg, #1565c0, #0d47a1)", slotBorder: "#0d47a1", footerBg: "#1a237e", footerBorder: "#283593", polka: { bg: "#1a237e", dots: ["#e53935"] } },
   polkaCreamColorful:{ frame: "#fff8e1", slot: "linear-gradient(180deg, #ffb74d, #ff9800)", slotBorder: "#ef6c00", footerBg: "#fff8e1", footerBorder: "#ffd54f", polka: { bg: "#fff8e1", dots: ["#e53935","#1e88e5","#43a047","#fdd835","#ab47bc","#ff7043"] } }
 };
 /* generate a tiled emoji background pattern as a data URL */
@@ -880,6 +880,9 @@ function applyFilmStyle(filmKey) {
   const f = FILM_STYLES[filmKey] || FILM_STYLES.classic;
   const frame = $(".strip-frame");
   const footer = $(".strip-footer");
+  frame.style.background = "";
+  frame.style.backgroundImage = "";
+  frame.style.backgroundRepeat = "";
   frame.style.background = f.frame;
   frame.style.borderColor = f.slotBorder;
   footer.style.background = f.footerBg;
@@ -890,25 +893,23 @@ function applyFilmStyle(filmKey) {
     frame.style.backgroundImage = "url(" + pat + ")";
     frame.style.backgroundRepeat = "repeat";
   } else if (f.polka) {
-    const pat = makePolkaPattern(f.polka.bg, f.polka.dots, 60, 60, 5);
+    const pat = makePolkaPattern(f.polka.bg, f.polka.dots, 60, 60, 4);
     frame.style.backgroundImage = "url(" + pat + ")";
     frame.style.backgroundRepeat = "repeat";
-  } else {
-    frame.style.backgroundImage = "";
-    frame.style.backgroundRepeat = "";
   }
 
   $$(".strip-slot").forEach((slot) => {
-    slot.style.background = f.slot;
-    slot.style.borderColor = f.slotBorder;
+    slot.style.background = "";
     slot.style.backgroundImage = "";
     slot.style.backgroundRepeat = "";
+    slot.style.background = f.slot;
+    slot.style.borderColor = f.slotBorder;
     if (f.emojiBg) {
       const pat = makeEmojiPattern(f.emojiBg, 80, 80, 0.22);
       slot.style.backgroundImage = "url(" + pat + ")";
       slot.style.backgroundRepeat = "repeat";
     } else if (f.polka) {
-      const pat = makePolkaPattern(f.polka.bg, f.polka.dots, 50, 50, 4);
+      const pat = makePolkaPattern(f.polka.bg, f.polka.dots, 50, 50, 3);
       slot.style.backgroundImage = "url(" + pat + ")";
       slot.style.backgroundRepeat = "repeat";
     }
