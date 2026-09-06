@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FotoMat 2000 — Online Photobooth</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- =================== TOP BAR =================== -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-icon"></span>
+      <span class="brand-name">FotoMat <em>2000</em></span>
+      <span class="brand-tag">Online Photobooth</span>
+    </div>
+    <nav class="topnav">
+      <a class="nav-link active" data-nav="landing">Home</a>
+      <a class="nav-link" data-nav="auth">Sign In</a>
+      <a class="nav-link" data-nav="booth">Booth</a>
+    </nav>
+  </div>
+</header>
+
+<!-- =================== LANDING =================== -->
+<section id="landing" class="page active">
+  <div class="hero">
+    <div class="hero-card">
+      <div class="hero-title">
+        <h1>Welcome to FotoMat</h1>
+        <p class="subtitle">A classic four-shot photobooth, right in your browser.</p>
+      </div>
+      <div class="hero-features">
+        <div class="feature">
+          <div class="feature-icon">4</div>
+          <h3>Four shots</h3>
+          <p>Stacked into a printable strip.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">★</div>
+          <h3>Twenty filters</h3>
+          <p>Vintage, neon, noir and more.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">↓</div>
+          <h3>Downloadable</h3>
+          <p>Save your strip as a JPG.</p>
+        </div>
+      </div>
+      <div class="hero-cta">
+        <button class="btn btn-primary" data-nav="auth">Start shooting</button>
+        <button class="btn btn-secondary" data-nav="auth" data-mode="signin">I have an account</button>
+      </div>
+    </div>
+
+    <div class="hero-side">
+      <div class="preview-window">
+        <div class="window-titlebar">
+          <span class="dot dot-r"></span>
+          <span class="dot dot-y"></span>
+          <span class="dot dot-g"></span>
+          <span class="window-title">Preview</span>
+        </div>
+        <div class="preview-body">
+          <div class="preview-strip">
+            <div class="preview-shot"></div>
+            <div class="preview-shot"></div>
+            <div class="preview-shot"></div>
+            <div class="preview-shot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-row">
+    <div class="panel">
+      <h2 class="panel-title">How it works</h2>
+      <ol class="how-list">
+        <li>Create an account or sign in.</li>
+        <li>Allow camera access.</li>
+        <li>Pick a filter, then press the shutter.</li>
+        <li>Wait for the 10 second timer between shots.</li>
+        <li>Download your finished strip.</li>
+      </ol>
+    </div>
+    <div class="panel">
+      <h2 class="panel-title">Tips</h2>
+      <ul class="how-list">
+        <li>Filters are baked into the photo at capture time.</li>
+        <li>Hit reset to clear the strip and start over.</li>
+        <li>Save a single shot or the full 4-up strip.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- =================== AUTH =================== -->
+<section id="auth" class="page">
+  <div class="auth-shell">
+    <div class="window">
+      <div class="window-titlebar">
+        <span class="dot dot-r"></span>
+        <span class="dot dot-y"></span>
+        <span class="dot dot-g"></span>
+        <span class="window-title">Member Access</span>
+      </div>
+      <div class="window-body">
+        <h2 class="auth-heading">Sign in to continue</h2>
+
+        <div class="tabbar">
+          <button class="tab active" data-tab="signin">Sign In</button>
+          <button class="tab" data-tab="signup">Create Account</button>
+        </div>
+
+        <form id="signin-form" class="auth-form active">
+          <label>Username
+            <input type="text" name="username" required autocomplete="username" />
+          </label>
+          <label>Password
+            <input type="password" name="password" required autocomplete="current-password" />
+          </label>
+          <button type="submit" class="btn btn-primary block">Sign in</button>
+          <p class="form-msg"></p>
+        </form>
+
+        <form id="signup-form" class="auth-form">
+          <label>Username
+            <input type="text" name="username" required maxlength="24" autocomplete="username" />
+          </label>
+          <label>Email
+            <input type="email" name="email" required autocomplete="email" />
+          </label>
+          <label>Password
+            <input type="password" name="password" required minlength="6" autocomplete="new-password" />
+          </label>
+          <button type="submit" class="btn btn-primary block">Create account</button>
+          <p class="form-msg"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== BOOTH =================== -->
+<section id="booth" class="page">
+  <div class="booth-shell">
+    <div class="booth-header">
+      <h2 class="booth-title">The Booth</h2>
+      <div class="booth-meta">
+        <span class="welcome-user" id="welcome-user">Welcome, guest</span>
+        <button class="btn btn-secondary btn-small" id="logout">Log out</button>
+      </div>
+    </div>
+
+    <div class="booth-grid">
+      <!-- CAMERA -->
+      <div class="window camera-window">
+        <div class="window-titlebar">
+          <span class="dot dot-r"></span>
+          <span class="dot dot-y"></span>
+          <span class="dot dot-g"></span>
+          <span class="window-title">Live Preview</span>
+          <span class="timer-pill" id="timer-pill">Ready</span>
+        </div>
+        <div class="window-body camera-body">
+          <div class="screen">
+            <video id="video" autoplay playsinline muted></video>
+            <div class="flash" id="flash"></div>
+            <div class="reticle"></div>
+            <div class="big-timer" id="big-timer"></div>
+          </div>
+
+          <div class="controls">
+            <button class="btn btn-primary btn-shutter" id="shutter" disabled>● Take 4 Shots</button>
+            <button class="btn btn-secondary btn-small" id="start-cam">Start camera</button>
+            <button class="btn btn-secondary btn-small" id="reset">Reset strip</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILTERS + STRIP -->
+      <div class="window booth-side">
+        <div class="window-titlebar">
+          <span class="dot dot-r"></span>
+          <span class="dot dot-y"></span>
+          <span class="dot dot-g"></span>
+          <span class="window-title">Filters &amp; Strip</span>
+        </div>
+        <div class="window-body">
+          <h3 class="section-title">Choose a filter</h3>
+          <div class="filter-grid" id="filter-grid"></div>
+
+          <h3 class="section-title">Your strip</h3>
+          <div class="strip-frame">
+            <div class="strip" id="strip">
+              <div class="strip-slot empty" data-i="0"><span>1</span></div>
+              <div class="strip-slot empty" data-i="1"><span>2</span></div>
+              <div class="strip-slot empty" data-i="2"><span>3</span></div>
+              <div class="strip-slot empty" data-i="3"><span>4</span></div>
+            </div>
+            <div class="strip-footer">FotoMat 2000 — <span id="strip-date"></span></div>
+          </div>
+
+          <div class="strip-actions">
+            <button class="btn btn-primary" id="download" disabled>Download strip</button>
+            <button class="btn btn-secondary btn-small" id="download-single" disabled>Save last shot</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <span>FotoMat 2000 · est. 2026 · powered by Supabase</span>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
