@@ -91,7 +91,7 @@
       <h2 class="panel-title">Tips</h2>
       <ul class="how-list">
         <li>Filters are baked into the photo at capture time.</li>
-        <li>Hit reset to clear the strip and start over.</li>
+        <li>Drag stickers onto your strip to decorate it.</li>
         <li>Save a single shot or the full 4-up strip.</li>
       </ul>
     </div>
@@ -130,6 +130,9 @@
         <form id="signup-form" class="auth-form">
           <label>Username
             <input type="text" name="username" required maxlength="24" autocomplete="username" />
+          </label>
+          <label>Email
+            <input type="email" name="email" required autocomplete="email" />
           </label>
           <label>Password
             <input type="password" name="password" required minlength="6" autocomplete="new-password" />
@@ -174,8 +177,12 @@
 
           <div class="controls">
             <button class="btn btn-primary btn-shutter" id="shutter" disabled>● Take 4 Shots</button>
-            <button class="btn btn-secondary btn-small" id="start-cam">Start camera</button>
-            <button class="btn btn-secondary btn-small" id="reset">Reset strip</button>
+
+          </div>
+
+          <div class="sticker-section">
+            <h3 class="section-title">Stickers — drag to your strip</h3>
+            <div class="sticker-palette" id="sticker-palette"></div>
           </div>
         </div>
       </div>
@@ -195,10 +202,10 @@
           <h3 class="section-title">Your strip</h3>
           <div class="strip-frame">
             <div class="strip" id="strip">
-              <div class="strip-slot empty" data-i="0"><span>1</span></div>
-              <div class="strip-slot empty" data-i="1"><span>2</span></div>
-              <div class="strip-slot empty" data-i="2"><span>3</span></div>
-              <div class="strip-slot empty" data-i="3"><span>4</span></div>
+              <div class="strip-slot empty" data-i="0"><span>1</span><div class="slot-stickers"></div></div>
+              <div class="strip-slot empty" data-i="1"><span>2</span><div class="slot-stickers"></div></div>
+              <div class="strip-slot empty" data-i="2"><span>3</span><div class="slot-stickers"></div></div>
+              <div class="strip-slot empty" data-i="3"><span>4</span><div class="slot-stickers"></div></div>
             </div>
             <div class="strip-footer">FotoMat 2000 — <span id="strip-date"></span></div>
           </div>
@@ -213,6 +220,7 @@
   </div>
 </section>
 
+<!-- footer -->
 <footer class="site-footer">
   <span>FotoMat 2000 · est. 2026 · powered by Supabase</span>
 </footer>

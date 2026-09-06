@@ -86,7 +86,7 @@ function buildCSSFilter(p) {
 /* ============================================================
    State & DOM
    ============================================================ */
-const state = { user: null, photos: [], activeFilter: 0, stream: null };
+const state = { user: null, photos: [], activeFilter: 0, stream: null, stickers: [[], [], [], []] };
 const $  = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 const video       = $("#video");
@@ -271,7 +271,6 @@ function stopCamera() {
   shutter.disabled = true;
   setTimerPill("Stopped", true);
 }
-$("#start-cam").addEventListener("click", () => startCamera());
 
 /* ============================================================
    CAPTURE — 4 shots, each with a 10s countdown
@@ -286,8 +285,6 @@ $("#shutter").addEventListener("click", async () => {
       });
       video.srcObject = state.stream;
       await video.play();
-      video.style.filter = buildCSSFilter(FILTERS[state.activeFilter]);
-      $("#noise-overlay").classList.toggle("visible", FILTERS[state.activeFilter].name === "VHS");
       shutter.disabled = false;
       setTimerPill("Ready", false);
     } catch (err) {
@@ -417,48 +414,13 @@ function applyFilterToPixels(ctx, w, h, p) {
 }
 
 function gaussianBlur(ctx, w, h, radius) {
-  const sigma = radius / 2;
-  const r = Math.min(Math.ceil(sigma * 2), 3);
-  const img = ctx.getImageData(0, 0, w, h);
-  const d = img.data;
-  const src = new Float32Array(d.length);
-  for (let i = 0; i < d.length; i++) src[i] = d[i];
-  const size = r * 2 + 1;
-  const kernel = new Float32Array(size);
-  let sum = 0;
-  for (let i = -r; i <= r; i++) {
-    kernel[i + r] = Math.exp(-(i * i) / (2 * sigma * sigma));
-    sum += kernel[i + r];
-  }
-  for (let i = 0; i < size; i++) kernel[i] /= sum;
-  const temp = new Float32Array(d.length);
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      let rr = 0, gg = 0, bb = 0, aa = 0;
-      for (let dx = -r; dx <= r; dx++) {
-        const nx = Math.min(w - 1, Math.max(0, x + dx));
-        const idx = (y * w + nx) * 4;
-        const k = kernel[dx + r];
-        rr += src[idx] * k; gg += src[idx + 1] * k; bb += src[idx + 2] * k; aa += src[idx + 3] * k;
-      }
-      const idx = (y * w + x) * 4;
-      temp[idx] = rr; temp[idx + 1] = gg; temp[idx + 2] = bb; temp[idx + 3] = aa;
-    }
-  }
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      let rr = 0, gg = 0, bb = 0, aa = 0;
-      for (let dy = -r; dy <= r; dy++) {
-        const ny = Math.min(h - 1, Math.max(0, y + dy));
-        const idx = (ny * w + x) * 4;
-        const k = kernel[dy + r];
-        rr += temp[idx] * k; gg += temp[idx + 1] * k; bb += temp[idx + 2] * k; aa += temp[idx + 3] * k;
-      }
-      const idx = (y * w + x) * 4;
-      d[idx] = Math.min(255, Math.max(0, rr)); d[idx + 1] = Math.min(255, Math.max(0, gg)); d[idx + 2] = Math.min(255, Math.max(0, bb)); d[idx + 3] = aa;
-    }
-  }
-  ctx.putImageData(img, 0, 0);
+  const tmp = document.createElement("canvas");
+  tmp.width = w; tmp.height = h;
+  const tmpCtx = tmp.getContext("2d");
+  tmpCtx.filter = "blur(" + radius + "px)";
+  tmpCtx.drawImage(ctx.canvas, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  ctx.drawImage(tmp, 0, 0);
 }
 
 function addGrain(ctx, w, h, amount) {
@@ -479,24 +441,20 @@ function addGrain(ctx, w, h, amount) {
 function refreshStrip() {
   $$(".strip-slot").forEach((s, i) => {
     s.classList.toggle("empty", !state.photos[i]);
-    s.innerHTML = state.photos[i]
-      ? '<img src="' + state.photos[i] + '" alt="shot ' + (i + 1) + '" />'
-      : "<span>" + (i + 1) + "</span>";
+    const hasImg = !!state.photos[i];
+    const imgEl = s.querySelector("img");
+    const numEl = s.querySelector(":scope > span:not(.sticker-delete)");
+    if (hasImg && !imgEl) {
+      s.innerHTML = '<img src="' + state.photos[i] + '" alt="shot ' + (i + 1) + '" /><div class="slot-stickers"></div>';
+    } else if (!hasImg) {
+      s.innerHTML = "<span>" + (i + 1) + "</span><div class=\"slot-stickers\"></div>";
+    }
+    renderSlotStickers(i);
   });
   downloadBtn.disabled = state.photos.length === 0;
   downloadSingleBtn.disabled = state.photos.length === 0;
 }
-$("#reset").addEventListener("click", () => {
-  if (state.photos.length === 0) return;
-  if (!confirm("Clear all shots?")) return;
-  state.photos = [];
-  refreshStrip();
-  hideBigTimer();
-  stopCamera();
-  video.style.filter = "none";
-  $("#noise-overlay").classList.remove("visible");
-  setTimerPill("Click Take 4 Shots to start", true);
-});
+
 
 /* ============================================================
    DOWNLOAD
@@ -526,13 +484,21 @@ function makeStripCanvas() {
     const img = new Image(); img.src = src;
     const y = i * shotH;
     ctx.drawImage(img, 0, y, w, shotH);
+    state.stickers[i].forEach((st) => {
+      const sx = (st.x / 100) * w;
+      const sy = y + (st.y / 100) * shotH;
+      ctx.font = "28px serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(st.emoji, sx, sy);
+    });
     ctx.strokeStyle = "#dddddd"; ctx.lineWidth = 1;
     ctx.strokeRect(0, y, w, shotH);
   });
   const footerY = shotH * 4 + 12;
   ctx.fillStyle = "#1e6dbf"; ctx.font = "bold 16px 'Segoe UI', sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("FotoMat 2000 — " + formatDate(new Date()), w / 2, footerY + 14);
+  ctx.fillText("FotoMat 2000 \u2014 " + formatDate(new Date()), w / 2, footerY + 14);
   ctx.fillStyle = "#4a5e76"; ctx.font = "11px 'Segoe UI', sans-serif";
   ctx.fillText("captured by " + (state.user?.username || "guest"), w / 2, footerY + 32);
   return c;
@@ -561,6 +527,85 @@ function formatDate(d) {
   return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
 }
 
+
+/* ============================================================
+   STICKERS — drag & drop
+   ============================================================ */
+const STICKER_EMOJIS = [
+  "\u2764\uFE0F", "\u2B50", "\u2728", "\uD83C\uDF89", "\uD83D\uDE0E",
+  "\uD83D\uDD25", "\uD83C\uDF1F", "\uD83C\uDFAD", "\uD83D\uDC51", "\uD83D\uDC8E",
+  "\uD83C\uDF08", "\uD83C\uDFB8", "\uD83C\uDFA8", "\uD83C\uDFB5", "\uD83C\uDF3A",
+  "\uD83E\uDD8B", "\uD83C\uDF80", "\u2B50", "\uD83D\uDCAB", "\uD83D\uDC96"
+];
+function buildStickerPalette() {
+  const palette = $("#sticker-palette");
+  palette.innerHTML = "";
+  STICKER_EMOJIS.forEach((emoji) => {
+    const el = document.createElement("div");
+    el.className = "sticker-item";
+    el.textContent = emoji;
+    el.draggable = true;
+    el.addEventListener("dragstart", (e) => {
+      e.dataTransfer.setData("text/plain", emoji);
+      e.dataTransfer.effectAllowed = "copy";
+    });
+    palette.appendChild(el);
+  });
+}
+function initStickerDrop() {
+  $$(".strip-slot").forEach((slot) => {
+    slot.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+      slot.classList.add("drag-over");
+    });
+    slot.addEventListener("dragleave", () => {
+      slot.classList.remove("drag-over");
+    });
+    slot.addEventListener("drop", (e) => {
+      e.preventDefault();
+      slot.classList.remove("drag-over");
+      const emoji = e.dataTransfer.getData("text/plain");
+      if (!emoji) return;
+      const i = parseInt(slot.dataset.i);
+      const rect = slot.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      const cx = Math.max(5, Math.min(95, x));
+      const cy = Math.max(5, Math.min(95, y));
+      state.stickers[i].push({ emoji, x: cx, y: cy });
+      renderSlotStickers(i);
+    });
+  });
+}
+function renderSlotStickers(i) {
+  const slot = $$(".strip-slot")[i];
+  if (!slot) return;
+  const container = slot.querySelector(".slot-stickers");
+  if (!container) return;
+  container.innerHTML = "";
+  state.stickers[i].forEach((st, si) => {
+    const el = document.createElement("div");
+    el.className = "slot-sticker";
+    el.style.left = st.x + "%";
+    el.style.top = st.y + "%";
+    el.textContent = st.emoji;
+    const del = document.createElement("span");
+    del.className = "sticker-delete";
+    del.textContent = "\u2715";
+    del.addEventListener("click", (e) => {
+      e.stopPropagation();
+      state.stickers[i].splice(si, 1);
+      renderSlotStickers(i);
+    });
+    el.appendChild(del);
+    container.appendChild(el);
+  });
+}
+function renderAllStickers() {
+  for (let i = 0; i < 4; i++) renderSlotStickers(i);
+}
+
 /* ============================================================
    INIT
    ============================================================ */
@@ -568,5 +613,7 @@ function formatDate(d) {
   await resumeSessionFromStorage();
 })();
 buildFilters();
+buildStickerPalette();
+initStickerDrop();
 stripDate.textContent = formatDate(new Date());
 setTimerPill("Click Take 4 Shots to start", true);
