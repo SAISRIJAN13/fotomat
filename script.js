@@ -535,8 +535,31 @@ function makeStripCanvas() {
   const c = document.createElement("canvas"); c.width = w; c.height = h;
   const ctx = c.getContext("2d");
   const f = FILM_STYLES[state.film] || FILM_STYLES.classic;
-  ctx.fillStyle = f.frame.includes("gradient") ? "#e0e4ea" : f.frame;
-  ctx.fillRect(0, 0, w, h);
+
+  /* parse gradient string or solid color */
+  function drawBackground(style, x, y, width, height) {
+    if (!style) { ctx.fillStyle = "#e0e4ea"; ctx.fillRect(x, y, width, height); return; }
+    const gradMatch = style.match(/linear-gradient\(([^)]+)\)/);
+    if (gradMatch) {
+      const parts = gradMatch[1].split(",").map(s => s.trim());
+      const angle = parts[0].includes("deg") ? parseFloat(parts[0]) : 180;
+      const colors = parts.filter(p => p.startsWith("#"));
+      const rad = (angle - 90) * Math.PI / 180;
+      const cx1 = x + width / 2 - Math.cos(rad) * width;
+      const cy1 = y + height / 2 - Math.sin(rad) * height;
+      const cx2 = x + width / 2 + Math.cos(rad) * width;
+      const cy2 = y + height / 2 + Math.sin(rad) * height;
+      const grad = ctx.createLinearGradient(cx1, cy1, cx2, cy2);
+      colors.forEach((col, i) => { grad.addColorStop(i / Math.max(colors.length - 1, 1), col); });
+      ctx.fillStyle = grad;
+    } else {
+      ctx.fillStyle = style;
+    }
+    ctx.fillRect(x, y, width, height);
+  }
+
+  /* draw strip frame background */
+  drawBackground(f.frame, 0, 0, w, h);
 
   /* draw emoji background if present */
   if (f.emojiBg) {
@@ -563,52 +586,103 @@ function makeStripCanvas() {
   /* draw polka dot background if present */
   if (f.polka) {
     ctx.save();
-    const dotSize = 5;
-    const spacing = dotSize * 2.5;
-    const rows = Math.ceil(h / spacing) + 1;
-    const cols = Math.ceil(w / spacing) + 1;
-    for (let r = 0; r < rows; r++) {
-      for (let col = 0; col < cols; col++) {
-        const x = col * spacing + (r % 2 ? spacing / 2 : 0);
-        const y = r * spacing;
+    ctx.globalAlpha = 0.8;
+    const dotSize = 4;
+    const spacing = 12;
+    for (let x = 0; x < w; x += spacing) {
+      for (let y = 0; y < h; y += spacing) {
+        const dotColor = f.polka.dots[Math.floor(Math.random() * f.polka.dots.length)];
+        ctx.fillStyle = dotColor;
         ctx.beginPath();
         ctx.arc(x, y, dotSize, 0, Math.PI * 2);
-        ctx.fillStyle = f.polka.dots[Math.floor(Math.random() * f.polka.dots.length)];
         ctx.fill();
       }
     }
     ctx.restore();
   }
 
+  /* draw slot backgrounds and photos */
   state.photos.forEach((src, i) => {
-    const img = new Image(); img.src = src;
     const y = i * shotH;
+    /* draw slot background */
+    drawBackground(f.slot, 0, y, w, shotH);
+
+    /* draw emoji overlay in slot */
+    if (f.emojiBg) {
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      const count = 8 + Math.floor(Math.random() * 6);
+      for (let j = 0; j < count; j++) {
+        const em = f.emojiBg[Math.floor(Math.random() * f.emojiBg.length)];
+        const ex = Math.random() * w;
+        const ey = y + Math.random() * shotH;
+        const size = 12 + Math.floor(Math.random() * 10);
+        ctx.font = size + "px serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.save();
+        ctx.translate(ex, ey);
+        ctx.rotate((Math.random() - 0.5) * 0.5);
+        ctx.fillText(em, 0, 0);
+        ctx.restore();
+      }
+      ctx.restore();
+    }
+
+    /* draw polka dots in slot */
+    if (f.polka) {
+      ctx.save();
+      ctx.globalAlpha = 0.7;
+      const dotSize = 3;
+      const spacing = 10;
+      for (let px = 0; px < w; px += spacing) {
+        for (let py = y; py < y + shotH; py += spacing) {
+          const dotColor = f.polka.dots[Math.floor(Math.random() * f.polka.dots.length)];
+          ctx.fillStyle = dotColor;
+          ctx.beginPath();
+          ctx.arc(px, py, dotSize, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.restore();
+    }
+
+    /* draw photo */
+    const img = new Image(); img.src = src;
     ctx.drawImage(img, 0, y, w, shotH);
+
+    /* draw stickers */
     state.stickers[i].forEach((st) => {
       const sx = (st.x / 100) * w;
       const sy = y + (st.y / 100) * shotH;
       if (st.type === "image" && st.src) {
         const stickerImg = new Image();
         stickerImg.src = st.src;
-        const sW = 60, sH = (stickerImg.naturalHeight / stickerImg.naturalWidth) * sW || 50;
+        const sW = 80, sH = (stickerImg.naturalHeight / stickerImg.naturalWidth) * sW || 60;
         ctx.drawImage(stickerImg, sx - sW / 2, sy - sH / 2, sW, sH);
       } else {
-        ctx.font = "28px serif";
+        ctx.font = "36px serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText(st.emoji, sx, sy);
       }
     });
+
+    /* draw slot border */
     ctx.strokeStyle = f.slotBorder;
     ctx.lineWidth = 2;
     ctx.strokeRect(0, y, w, shotH);
   });
-  const footerY = shotH * 4 + 12;
+
+  /* draw footer */
+  const footerY = shotH * 4;
+  drawBackground(f.footerBg, 0, footerY, w, 60);
   ctx.fillStyle = "#1e6dbf"; ctx.font = "bold 16px 'Segoe UI', sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("FotoMat 2000 \u2014 " + formatDate(new Date()), w / 2, footerY + 14);
+  ctx.fillText("FotoMat 2000 \u2014 " + formatDate(new Date()), w / 2, footerY + 22);
   ctx.fillStyle = "#4a5e76"; ctx.font = "11px 'Segoe UI', sans-serif";
-  ctx.fillText("captured by " + (state.user?.username || "guest"), w / 2, footerY + 32);
+  ctx.fillText("captured by " + (state.user?.username || "guest"), w / 2, footerY + 42);
+
   return c;
 }
 
@@ -739,7 +813,7 @@ function renderSlotStickers(i) {
     if (isImg) {
       const img = document.createElement("img");
       img.src = st.src;
-      img.style.width = "40px";
+      img.style.width = "56px";
       img.style.height = "auto";
       img.style.pointerEvents = "none";
       el.appendChild(img);
