@@ -38,8 +38,8 @@ body {
 }
 
 /* ============================================================
-   TOP BAR
-   ============================================================ */
+    TOP BAR
+    ============================================================ */
 .topbar {
   background: var(--titlebar);
   border-bottom: 1px solid #7a96b3;
@@ -115,8 +115,8 @@ body {
 }
 
 /* ============================================================
-   PAGES
-   ============================================================ */
+    PAGES
+    ============================================================ */
 .page {
   display: none;
   padding: 30px 20px 60px;
@@ -124,8 +124,8 @@ body {
 .page.active { display: block; }
 
 /* ============================================================
-   BUTTONS
-   ============================================================ */
+    BUTTONS
+    ============================================================ */
 .btn {
   font: 600 13px/1 "Segoe UI", Tahoma, sans-serif;
   padding: 8px 18px;
@@ -168,8 +168,8 @@ body {
 }
 
 /* ============================================================
-   WINDOWS
-   ============================================================ */
+    WINDOWS
+    ============================================================ */
 .window {
   background: var(--window-bg);
   border: 1px solid var(--panel-edge);
@@ -204,8 +204,8 @@ body {
 .window-body { padding: 18px; }
 
 /* ============================================================
-   LANDING
-   ============================================================ */
+    LANDING
+    ============================================================ */
 .hero {
   max-width: 1100px;
   margin: 10px auto 30px;
@@ -339,8 +339,8 @@ body {
 .how-list li { margin-bottom: 4px; font-size: 13px; }
 
 /* ============================================================
-   AUTH
-   ============================================================ */
+    AUTH
+    ============================================================ */
 .auth-shell {
   max-width: 440px;
   margin: 30px auto;
@@ -411,8 +411,8 @@ body {
 .form-msg.ok { color: var(--ok); }
 
 /* ============================================================
-   BOOTH
-   ============================================================ */
+    BOOTH
+    ============================================================ */
 .booth-shell {
   max-width: 1100px;
   margin: 0 auto;
@@ -479,7 +479,21 @@ body {
   object-fit: cover;
   display: block;
   transform: scaleX(-1);
+  filter: none;
+  transition: filter 0.4s ease;
 }
+.noise-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.15'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  mix-blend-mode: overlay;
+}
+.noise-overlay.visible { opacity: 1; }
+
 .reticle {
   position: absolute;
   inset: 12px;
