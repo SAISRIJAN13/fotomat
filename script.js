@@ -143,6 +143,7 @@ const strip       = $("#strip");
 const filterGrid  = $("#filter-grid");
 const downloadBtn = $("#download");
 const downloadSingleBtn = $("#download-single");
+const resetStripBtn = $("#reset-strip");
 const welcomeUser = $("#welcome-user");
 const stripDate   = $("#strip-date");
 
@@ -522,6 +523,13 @@ downloadSingleBtn.addEventListener("click", () => {
   a.href = state.photos[state.photos.length - 1];
   a.download = "fotomat-snap-" + Date.now() + ".jpg"; a.click();
 });
+resetStripBtn.addEventListener("click", () => {
+  state.photos = [];
+  state.stickers = [[], [], [], []];
+  refreshStrip();
+  shutter.disabled = false;
+  setTimerPill("Ready", false);
+});
 function makeStripCanvas() {
   const w = 480, shotH = w * 3 / 4, h = shotH * 4 + 60;
   const c = document.createElement("canvas"); c.width = w; c.height = h;
@@ -529,6 +537,29 @@ function makeStripCanvas() {
   const f = FILM_STYLES[state.film] || FILM_STYLES.classic;
   ctx.fillStyle = f.frame.includes("gradient") ? "#e0e4ea" : f.frame;
   ctx.fillRect(0, 0, w, h);
+
+  /* draw emoji background if present */
+  if (f.emojiBg) {
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    const count = 40 + Math.floor(Math.random() * 20);
+    for (let i = 0; i < count; i++) {
+      const em = f.emojiBg[Math.floor(Math.random() * f.emojiBg.length)];
+      const x = Math.random() * w;
+      const y = Math.random() * h;
+      const size = 16 + Math.floor(Math.random() * 14);
+      ctx.font = size + "px serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate((Math.random() - 0.5) * 0.6);
+      ctx.fillText(em, 0, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
   state.photos.forEach((src, i) => {
     const img = new Image(); img.src = src;
     const y = i * shotH;
@@ -673,6 +704,7 @@ function initTimerButtons() {
    FILM SELECTION
    ============================================================ */
 const FILM_STYLES = {
+  /* ---- solid / gradient films ---- */
   classic:   { frame: "linear-gradient(180deg, #f0f2f6 0%, #e0e4ea 100%)", slot: "linear-gradient(180deg, #1a2030, #0f1824)", slotBorder: "#3a4656", footerBg: "#e0e4ea", footerBorder: "#8a96a4" },
   white:     { frame: "#fdfdfd", slot: "linear-gradient(180deg, #f8f8f8, #eee)", slotBorder: "#ccc", footerBg: "#f5f5f5", footerBorder: "#ddd" },
   pink:      { frame: "linear-gradient(180deg, #fce4ec 0%, #f8bbd0 100%)", slot: "linear-gradient(180deg, #f48fb1, #ec407a)", slotBorder: "#d81b60", footerBg: "#f8bbd0", footerBorder: "#f48fb1" },
@@ -683,12 +715,53 @@ const FILM_STYLES = {
   mint:      { frame: "linear-gradient(180deg, #e0f2f1 0%, #b2dfdb 100%)", slot: "linear-gradient(180deg, #26a69a, #00897b)", slotBorder: "#00695c", footerBg: "#b2dfdb", footerBorder: "#80cbc4" },
   peach:     { frame: "linear-gradient(180deg, #fff3e0 0%, #ffe0b2 100%)", slot: "linear-gradient(180deg, #ffa726, #fb8c00)", slotBorder: "#ef6c00", footerBg: "#ffe0b2", footerBorder: "#ffcc80" },
   lavender:  { frame: "linear-gradient(180deg, #f3e5f5 0%, #e1bee7 100%)", slot: "linear-gradient(180deg, #ab47bc, #8e24aa)", slotBorder: "#6a1b9a", footerBg: "#e1bee7", footerBorder: "#ce93d8" },
-  hearts:    { frame: "linear-gradient(180deg, #fce4ec 0%, #f8bbd0 100%)", slot: "linear-gradient(180deg, #f48fb1, #f06292)", slotBorder: "#ec407a", footerBg: "#fce4ec", footerBorder: "#f48fb1" },
-  stars:     { frame: "linear-gradient(180deg, #fff8e1 0%, #ffecb3 100%)", slot: "linear-gradient(180deg, #ffb300, #ff8f00)", slotBorder: "#ff6f00", footerBg: "#ffecb3", footerBorder: "#ffd54f" },
-  confetti:  { frame: "linear-gradient(180deg, #f3e5f5 0%, #e1bee7 50%, #c8e6c9 100%)", slot: "linear-gradient(135deg, #7e57c2, #26a69a, #ef5350)", slotBorder: "#5e35b1", footerBg: "#e1bee7", footerBorder: "#ce93d8" },
   vintage:   { frame: "linear-gradient(180deg, #efebe9 0%, #d7ccc8 100%)", slot: "linear-gradient(180deg, #8d6e63, #6d4c41)", slotBorder: "#4e342e", footerBg: "#d7ccc8", footerBorder: "#bcaaa4" },
-  galaxy:    { frame: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", slot: "linear-gradient(135deg, #4a148c, #1a237e, #0d47a1)", slotBorder: "#311b92", footerBg: "#1a1a2e", footerBorder: "#4a148c" }
+  galaxy:    { frame: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", slot: "linear-gradient(135deg, #4a148c, #1a237e, #0d47a1)", slotBorder: "#311b92", footerBg: "#1a1a2e", footerBorder: "#4a148c" },
+  coral:     { frame: "linear-gradient(180deg, #fff1e6 0%, #ffccbc 50%, #ff8a80 100%)", slot: "linear-gradient(180deg, #ff7043, #e64a19)", slotBorder: "#bf360c", footerBg: "#ffccbc", footerBorder: "#ff8a80" },
+  aurora:    { frame: "linear-gradient(135deg, #1b5e20 0%, #00bcd4 50%, #7c4dff 100%)", slot: "linear-gradient(135deg, #00e5ff, #69f0ae, #b388ff)", slotBorder: "#004d40", footerBg: "#004d40", footerBorder: "#00bcd4" },
+  roseGold:  { frame: "linear-gradient(180deg, #fce4ec 0%, #f8bbd0 30%, #e8b4b8 60%, #d4a0a0 100%)", slot: "linear-gradient(180deg, #c48b9f, #a06070)", slotBorder: "#884050", footerBg: "#e8b4b8", footerBorder: "#c48b9f" },
+  ocean:     { frame: "linear-gradient(180deg, #e0f7fa 0%, #80deea 30%, #26c6da 60%, #00acc1 100%)", slot: "linear-gradient(180deg, #00838f, #006064)", slotBorder: "#004d40", footerBg: "#80deea", footerBorder: "#4dd0e1" },
+  cyberpunk: { frame: "linear-gradient(135deg, #ff00ff 0%, #0a0a2e 40%, #00ffff 100%)", slot: "linear-gradient(135deg, #ff00ff, #0d0d3b, #00ffff)", slotBorder: "#ff00ff", footerBg: "#0a0a2e", footerBorder: "#ff00ff" },
+  cottonCandy:{ frame: "linear-gradient(180deg, #f8bbd0 0%, #e1bee7 30%, #b3e5fc 60%, #c8e6c9 100%)", slot: "linear-gradient(180deg, #f48fb1, #ba68c8, #4fc3f7)", slotBorder: "#ce93d8", footerBg: "#e1bee7", footerBorder: "#ce93d8" },
+  emerald:   { frame: "linear-gradient(180deg, #e8f5e9 0%, #a5d6a7 50%, #66bb6a 100%)", slot: "linear-gradient(180deg, #2e7d32, #1b5e20)", slotBorder: "#0d3311", footerBg: "#a5d6a7", footerBorder: "#81c784" },
+  midnight:  { frame: "linear-gradient(135deg, #0d0d2b 0%, #1a1a4e 30%, #2d1b69 60%, #0d0d2b 100%)", slot: "linear-gradient(135deg, #4a148c, #283593, #1a237e)", slotBorder: "#311b92", footerBg: "#1a1a4e", footerBorder: "#4a148c" },
+
+  /* ---- emoji background films ---- */
+  romance:   { frame: "linear-gradient(180deg, #fce4ec 0%, #f8bbd0 100%)", slot: "linear-gradient(180deg, #f48fb1, #ec407a)", slotBorder: "#d81b60", footerBg: "#fce4ec", footerBorder: "#f48fb1", emojiBg: ["\u2764\uFE0F","\uD83D\uDC95","\uD83D\uDC9C","\uD83D\uDC94","\uD83E\uDD0D"] },
+  celebration:{ frame: "linear-gradient(180deg, #fff8e1 0%, #ffecb3 100%)", slot: "linear-gradient(180deg, #ffb300, #ff8f00)", slotBorder: "#ff6f00", footerBg: "#fff8e1", footerBorder: "#ffd54f", emojiBg: ["\uD83C\uDF89","\uD83C\uDF8A","\uD83C\uDF88","\uD83C\uDF81","\uD83C\uDF82"] },
+  nature:    { frame: "linear-gradient(180deg, #e8f5e9 0%, #c8e6c9 100%)", slot: "linear-gradient(180deg, #66bb6a, #43a047)", slotBorder: "#2e7d32", footerBg: "#c8e6c9", footerBorder: "#a5d6a7", emojiBg: ["\uD83C\uDF3A","\uD83C\uDF3B","\uD83C\uDF38","\uD83C\uDF3C","\uD83E\uDD8B"] },
+  cosmic:    { frame: "linear-gradient(135deg, #0d0d2b 0%, #1a1a4e 50%, #0d0d2b 100%)", slot: "linear-gradient(135deg, #283593, #1a237e)", slotBorder: "#0d47a1", footerBg: "#0d0d2b", footerBorder: "#311b92", emojiBg: ["\uD83C\uDF1F","\uD83C\uDF19","\uD83C\uDF0C","\u2B50","\uD83D\uDCAB"] },
+  summer:    { frame: "linear-gradient(180deg, #fff9c4 0%, #81d4fa 50%, #4fc3f7 100%)", slot: "linear-gradient(180deg, #0288d1, #01579b)", slotBorder: "#01579b", footerBg: "#81d4fa", footerBorder: "#4fc3f7", emojiBg: ["\u2600\uFE0F","\uD83C\uDFD6\uFE0F","\uD83C\uDF0A","\uD83C\uDF34","\uD83C\uDF53"] },
+  music:     { frame: "linear-gradient(180deg, #f3e5f5 0%, #e1bee7 100%)", slot: "linear-gradient(180deg, #ab47bc, #8e24aa)", slotBorder: "#6a1b9a", footerBg: "#f3e5f5", footerBorder: "#ce93d8", emojiBg: ["\uD83C\uDFB5","\uD83C\uDFB6","\uD83C\uDFB8","\uD83C\uDFB9","\uD83C\uDFBB"] },
+  sweets:    { frame: "linear-gradient(180deg, #fce4ec 0%, #f3e5f5 30%, #e8eaf6 60%, #e0f2f1 100%)", slot: "linear-gradient(180deg, #f06292, #ba68c8, #7986cb)", slotBorder: "#9c27b0", footerBg: "#f3e5f5", footerBorder: "#ce93d8", emojiBg: ["\uD83C\uDF70","\uD83C\uDF6D","\uD83C\uDF6C","\uD83C\uDF6E","\uD83C\uDF71"] },
+  space:     { frame: "linear-gradient(135deg, #000033 0%, #000066 30%, #000033 60%, #191970 100%)", slot: "linear-gradient(135deg, #1a237e, #0d47a1)", slotBorder: "#0d47a1", footerBg: "#000033", footerBorder: "#1a237e", emojiBg: ["\uD83D\uDE80","\uD83D\uDC0D","\uD83D\uDC0D","\uD83D\uDD2D","\u2604\uFE0F"] },
+  emojiRain: { frame: "linear-gradient(180deg, #e3f2fd 0%, #bbdefb 100%)", slot: "linear-gradient(180deg, #42a5f5, #1e88e5)", slotBorder: "#1565c0", footerBg: "#e3f2fd", footerBorder: "#90caf9", emojiBg: ["\uD83D\uDE00","\uD83D\uDE02","\uD83E\uDD29","\uD83E\uDD70","\uD83D\uDE0E","\uD83C\uDF1F","\uD83D\uDC4D","\uD83D\uDD25"] }
 };
+/* generate a tiled emoji background pattern as a data URL */
+function makeEmojiPattern(emojis, tileW, tileH, alpha) {
+  const c = document.createElement("canvas");
+  c.width = tileW; c.height = tileH;
+  const ctx = c.getContext("2d");
+  ctx.clearRect(0, 0, tileW, tileH);
+  ctx.globalAlpha = alpha || 0.15;
+  const count = 6 + Math.floor(Math.random() * 4);
+  for (let i = 0; i < count; i++) {
+    const em = emojis[Math.floor(Math.random() * emojis.length)];
+    const x = Math.random() * tileW;
+    const y = Math.random() * tileH;
+    const size = 14 + Math.floor(Math.random() * 12);
+    ctx.font = size + "px serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate((Math.random() - 0.5) * 0.6);
+    ctx.fillText(em, 0, 0);
+    ctx.restore();
+  }
+  return c.toDataURL();
+}
+
 function initFilmSelection() {
   $$(".film-swatch").forEach((sw) => {
     sw.addEventListener("click", () => {
@@ -708,9 +781,26 @@ function applyFilmStyle(filmKey) {
   frame.style.borderColor = f.slotBorder;
   footer.style.background = f.footerBg;
   footer.style.borderTop = "1px solid " + f.footerBorder;
+
+  /* emoji background for frame */
+  if (f.emojiBg) {
+    const pat = makeEmojiPattern(f.emojiBg, 120, 120, 0.18);
+    frame.style.backgroundImage = "url(" + pat + ")";
+    frame.style.backgroundRepeat = "repeat";
+  } else {
+    frame.style.backgroundImage = "none";
+  }
+
   $$(".strip-slot").forEach((slot) => {
     slot.style.background = f.slot;
     slot.style.borderColor = f.slotBorder;
+    if (f.emojiBg) {
+      const pat = makeEmojiPattern(f.emojiBg, 80, 80, 0.22);
+      slot.style.backgroundImage = "url(" + pat + ")";
+      slot.style.backgroundRepeat = "repeat";
+    } else {
+      slot.style.backgroundImage = "none";
+    }
   });
 }
 
