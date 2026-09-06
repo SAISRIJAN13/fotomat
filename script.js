@@ -47,7 +47,7 @@ const FILTERS = [
   { name: "Normal",   bright: 1.0,  contrast: 1.0,  sat: 1.0,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
   { name: "Glam",     bright: 1.1,  contrast: 1.0,  sat: 1.3,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
   { name: "Grunge",   bright: 0.95, contrast: 1.3,  sat: 1.0,  hue: 0,   gray: 0.6,invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "VHS",      bright: 1.0,  contrast: 1.2,  sat: 1.6,  hue: -10, gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "VHS",      bright: 1.0,  contrast: 1.3,  sat: 1.8,  hue: -10, gray: 0.05, invert: 0, sepia: 0.05, blur: 0.3, tint: [0,0,0], grain: 0.35 },
   { name: "B&W",      bright: 1.1,  contrast: 1.1,  sat: 0,    hue: 0,   gray: 1,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
   { name: "Sepia",    bright: 1.05, contrast: 1.05, sat: 1.0,  hue: 0,   gray: 0,  invert: 0, sepia: 0.8,blur: 0,  tint: [0.9,0.75,0.55] },
   { name: "Cold",     bright: 1.05, contrast: 1.0,  sat: 1.2,  hue: 180, gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
@@ -236,6 +236,7 @@ function setFilter(i) {
   state.activeFilter = i;
   $$(".filter-swatch").forEach((s, idx) => s.classList.toggle("active", idx === i));
   video.style.filter = buildCSSFilter(FILTERS[i]);
+  $("#noise-overlay").classList.toggle("visible", FILTERS[i].name === "VHS");
 }
 
 /* ============================================================
@@ -251,6 +252,7 @@ async function startCamera() {
     video.srcObject = state.stream;
     await video.play();
     video.style.filter = buildCSSFilter(FILTERS[state.activeFilter]);
+    $("#noise-overlay").classList.toggle("visible", FILTERS[state.activeFilter].name === "VHS");
     shutter.disabled = false;
     setTimerPill("Ready", false);
   } catch (err) {
@@ -263,6 +265,7 @@ function stopCamera() {
   if (state.stream) { state.stream.getTracks().forEach((t) => t.stop()); state.stream = null; }
   video.srcObject = null;
   video.style.filter = "none";
+  $("#noise-overlay").classList.remove("visible");
   shutter.disabled = true;
   setTimerPill("Stopped", true);
 }
@@ -282,6 +285,7 @@ $("#shutter").addEventListener("click", async () => {
       video.srcObject = state.stream;
       await video.play();
       video.style.filter = buildCSSFilter(FILTERS[state.activeFilter]);
+      $("#noise-overlay").classList.toggle("visible", FILTERS[state.activeFilter].name === "VHS");
       shutter.disabled = false;
       setTimerPill("Ready", false);
     } catch (err) {
@@ -347,6 +351,7 @@ function takePhoto() {
     ctx.filter = buildCSSFilter(preset);
     ctx.drawImage(video, 0, 0, w, h);
     ctx.restore();
+    if (preset.grain && preset.grain > 0) addGrain(ctx, w, h, preset.grain);
     state.photos.push(canvas.toDataURL("image/jpeg", 0.92));
   } catch (err) {
     console.error("CSS filter failed:", err);
@@ -357,8 +362,22 @@ function takePhoto() {
     const ctx = tmp.getContext("2d");
     ctx.translate(w, 0); ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0, w, h);
+    const preset = FILTERS[state.activeFilter];
+    if (preset.grain && preset.grain > 0) addGrain(ctx, w, h, preset.grain);
     state.photos.push(tmp.toDataURL("image/jpeg", 0.9));
   }
+}
+
+function addGrain(ctx, w, h, amount) {
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const data = imageData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    const noise = (Math.random() - 0.5) * amount * 255;
+    data[i]   = Math.min(255, Math.max(0, data[i]   + noise));
+    data[i+1] = Math.min(255, Math.max(0, data[i+1] + noise));
+    data[i+2] = Math.min(255, Math.max(0, data[i+2] + noise));
+  }
+  ctx.putImageData(imageData, 0, 0);
 }
 
 /* ============================================================
@@ -382,6 +401,7 @@ $("#reset").addEventListener("click", () => {
   hideBigTimer();
   stopCamera();
   video.style.filter = "none";
+  $("#noise-overlay").classList.remove("visible");
   setTimerPill("Click Take 4 Shots to start", true);
 });
 
