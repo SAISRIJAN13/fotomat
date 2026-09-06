@@ -334,7 +334,7 @@ function stopCamera() {
 $("#start-cam").addEventListener("click", () => startCamera());
 
 /* ============================================================
-   CAPTURE  — 4 shots with a visible 10-second timer between each
+   CAPTURE  — 4 shots, each preceded by a 10-second countdown
    ============================================================ */
 const GAP_SECONDS = 10;
 
@@ -346,6 +346,8 @@ $("#shutter").addEventListener("click", async () => {
   while (state.photos.length < 4) {
     if (state.photos.length > 0) {
       await showBigCountdown(GAP_SECONDS, "Next shot in");
+    } else {
+      await showBigCountdown(GAP_SECONDS, "Get ready");
     }
     takePhoto();
     refreshStrip();
