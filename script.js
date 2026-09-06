@@ -132,12 +132,12 @@ const FRAG_SRC = `
     gl_FragColor = vec4(col.rgb, 1.0);
   }`;
 
-let gl = null, program = null, buf = null, tex = null, fbo = null;
+let gl = null, program = null, buf = null, tex = null;
 
 function initWebGL(w, h) {
   const off = document.createElement("canvas");
   off.width = w; off.height = h;
-  gl = off.getContext("webgl", { preserveDrawingBuffer: true });
+  gl = off.getContext("webgl", { preserveDrawingBuffer: true, alpha: false });
   if (!gl) return false;
   gl.viewport(0, 0, w, h);
   const vs = gl.createShader(gl.VERTEX_SHADER);
@@ -164,7 +164,6 @@ function initWebGL(w, h) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  fbo = gl.createFramebuffer();
   return true;
 }
 
@@ -187,28 +186,8 @@ function renderFilter(video, preset) {
   gl.uniform1f(L("uSepia"), preset.sepia);
   gl.uniform1f(L("uBlur"), preset.blur);
   gl.uniform3fv(L("uTint"), new Float32Array(preset.tint));
-  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-  const px = new Uint8Array(w * h * 4);
-  gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
-  const out = document.createElement("canvas");
-  out.width = w; out.height = h;
-  const ctx = out.getContext("2d");
-  const d = ctx.createImageData(w, h);
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const si = ((h - 1 - y) * w + x) * 4;
-      const di = (y * w + x) * 4;
-      d.data[di]   = px[si];
-      d.data[di+1] = px[si+1];
-      d.data[di+2] = px[si+2];
-      d.data[di+3] = px[si+3];
-    }
-  }
-  ctx.putImageData(d, 0, 0);
-  return out.toDataURL("image/jpeg", 0.92);
+  return gl.canvas.toDataURL("image/jpeg", 0.92);
 }
 
 /* ============================================================
