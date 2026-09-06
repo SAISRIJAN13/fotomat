@@ -47,11 +47,11 @@ const FILTERS = [
   { name: "Normal",   bright: 1.0,  contrast: 1.0,  sat: 1.0,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
   { name: "Glam",     bright: 1.1,  contrast: 1.0,  sat: 1.3,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
   { name: "Grunge",   bright: 0.95, contrast: 1.3,  sat: 1.0,  hue: 0,   gray: 0.6,invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "VHS",      bright: 1.0,  contrast: 1.3,  sat: 1.8,  hue: -10, gray: 0.05, invert: 0, sepia: 0.05, blur: 0.3, tint: [0,0,0], grain: 0.35 },
+  { name: "VHS",      bright: 1.0,  contrast: 1.3,  sat: 1.8,  hue: 350, gray: 0.05, invert: 0, sepia: 0.05, blur: 0.3, tint: [0,0,0], grain: 0.35 },
   { name: "B&W",      bright: 1.1,  contrast: 1.1,  sat: 0,    hue: 0,   gray: 1,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
   { name: "Sepia",    bright: 1.05, contrast: 1.05, sat: 1.0,  hue: 0,   gray: 0,  invert: 0, sepia: 0.8,blur: 0,  tint: [0.9,0.75,0.55] },
   { name: "Cold",     bright: 1.05, contrast: 1.0,  sat: 1.2,  hue: 180, gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "Warm",     bright: 1.05, contrast: 1.0,  sat: 1.4,  hue: -30, gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "Warm",     bright: 1.05, contrast: 1.0,  sat: 1.4,  hue: 330, gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
   { name: "Fade",     bright: 1.15, contrast: 0.85, sat: 0.7,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
   { name: "Punch",    bright: 1.0,  contrast: 1.4,  sat: 1.5,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
   { name: "Dreamy",   bright: 1.15, contrast: 1.0,  sat: 1.3,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 1.2,tint: [0,0,0] },
@@ -59,7 +59,7 @@ const FILTERS = [
   { name: "Chrome",   bright: 1.1,  contrast: 1.5,  sat: 0.2,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
   { name: "Neon",     bright: 1.2,  contrast: 1.3,  sat: 2.2,  hue: 15,  gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
   { name: "Xmas",     bright: 1.05, contrast: 1.0,  sat: 1.5,  hue: 90,  gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "Halloween",bright: 0.9,  contrast: 1.2,  sat: 1.4,  hue: -90, gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "Halloween",bright: 0.9,  contrast: 1.2,  sat: 1.4,  hue: 270, gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
   { name: "Matrix",   bright: 0.85, contrast: 1.4,  sat: 3.0,  hue: 90,  gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
   { name: "Vintage",  bright: 1.05, contrast: 0.95, sat: 1.2,  hue: 0,   gray: 0,  invert: 0, sepia: 0.4,blur: 0, tint: [0,0,0] },
   { name: "Xray",     bright: 1.0,  contrast: 1.5,  sat: 1.0,  hue: 0,   gray: 1,  invert: 1, sepia: 0,  blur: 0,  tint: [0,0,0] },
@@ -71,7 +71,11 @@ function buildCSSFilter(p) {
   if (p.bright !== 1.0) parts.push("brightness(" + p.bright + ")");
   if (p.contrast !== 1.0) parts.push("contrast(" + p.contrast + ")");
   if (p.sat !== 1.0) parts.push("saturate(" + p.sat + ")");
-  if (p.hue !== 0) parts.push("hue-rotate(" + p.hue + "deg)");
+  if (p.hue !== 0) {
+    let deg = p.hue;
+    if (deg < 0) deg = 360 + deg;
+    parts.push("hue-rotate(" + deg + "deg)");
+  }
   if (p.gray > 0) parts.push("grayscale(" + p.gray + ")");
   if (p.invert > 0) parts.push("invert(" + p.invert + ")");
   if (p.sepia > 0) parts.push("sepia(" + p.sepia + ")");
@@ -341,14 +345,15 @@ function takePhoto() {
   flashEl.classList.add("active");
   try {
     const preset = FILTERS[state.activeFilter];
-    const w = video.videoWidth || 640;
-    const h = video.videoHeight || 480;
+    let w = video.videoWidth || 640;
+    let h = video.videoHeight || 480;
+    if (w < 1 || h < 1) { w = 640; h = 480; }
     const canvas = document.createElement("canvas");
     canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext("2d");
+    ctx.filter = buildCSSFilter(preset);
     ctx.save();
     ctx.translate(w, 0); ctx.scale(-1, 1);
-    ctx.filter = buildCSSFilter(preset);
     ctx.drawImage(video, 0, 0, w, h);
     ctx.restore();
     if (preset.grain && preset.grain > 0) addGrain(ctx, w, h, preset.grain);
