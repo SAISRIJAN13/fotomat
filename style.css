@@ -95,8 +95,54 @@ body {
     radial-gradient(2px 2px at 98% 8%, rgba(185,215,250,0.4) 50%, transparent 100%),
     radial-gradient(1px 1px at 8% 48%, rgba(200,225,255,0.6) 50%, transparent 100%),
     radial-gradient(1px 1px at 58% 55%, rgba(175,210,245,0.5) 50%, transparent 100%),
-    radial-gradient(1px 1px at 2%, #d6e7f5 0%, #b9d2ea 30%, #a8c8e0 50%, #96b8d8 100%);
+    radial-gradient(1px 1px at 2%,  #d6e7f5 0%, #b9d2ea 30%, #a8c8e0 50%, #96b8d8 100%);
   min-height: 100vh;
+  position: relative;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 12% 33%, rgba(200,225,255,0.6) 50%, transparent 100%),
+    radial-gradient(1px 1px at 67% 55%, rgba(180,210,240,0.5) 50%, transparent 100%),
+    radial-gradient(1px 1px at 25% 78%, rgba(210,230,255,0.4) 50%, transparent 100%),
+    radial-gradient(1px 1px at 88% 42%, rgba(190,220,250,0.6) 50%, transparent 100%),
+    radial-gradient(1px 1px at 44% 15%, rgba(170,210,240,0.5) 50%, transparent 100%),
+    radial-gradient(1px 1px at 73% 90%, rgba(205,230,255,0.4) 50%, transparent 100%),
+    radial-gradient(1px 1px at 37% 62%, rgba(175,215,250,0.6) 50%, transparent 100%),
+    radial-gradient(1px 1px at 91% 25%, rgba(185,210,245,0.5) 50%, transparent 100%);
+  animation: twinkle1 4s ease-in-out infinite alternate;
+  opacity: 0.5;
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 5% 10%, rgba(220,240,255,0.5) 50%, transparent 100%),
+    radial-gradient(1px 1px at 53% 73%, rgba(165,200,240,0.6) 50%, transparent 100%),
+    radial-gradient(1px 1px at 81% 58%, rgba(195,220,255,0.4) 50%, transparent 100%),
+    radial-gradient(1px 1px at 18% 92%, rgba(180,215,250,0.6) 50%, transparent 100%),
+    radial-gradient(1px 1px at 62% 38%, rgba(170,210,245,0.5) 50%, transparent 100%),
+    radial-gradient(1px 1px at 95% 70%, rgba(210,235,255,0.4) 50%, transparent 100%),
+    radial-gradient(1px 1px at 30% 45%, rgba(195,225,255,0.6) 50%, transparent 100%),
+    radial-gradient(1px 1px at 40% 5%, rgba(200,220,250,0.5) 50%, transparent 100%);
+  animation: twinkle2 5s ease-in-out infinite alternate;
+  animation-delay: 2.5s;
+  opacity: 0.4;
+}
+@keyframes twinkle1 {
+  0% { opacity: 0.3; }
+  100% { opacity: 0.8; }
+}
+@keyframes twinkle2 {
+  0% { opacity: 0.2; }
+  100% { opacity: 0.7; }
 }
 
 /* ============================================================
