@@ -1,16 +1,49 @@
 /* ============================================================
-   FotoMat 2000 — Supabase auth + photobooth logic
+   FotoMat 2000 — Custom auth (Supabase Postgres) + photobooth
    ============================================================ */
 
-/* ---------- Supabase ---------- */
+/* ---------- Supabase (data only, no auth.users) ---------- */
 const SUPABASE_URL = "https://adjnzwcpwkiudqvavqgz.supabase.co";
 const SUPABASE_KEY = "sb_publishable_eGJ1Ttm1DU3RZclfHOoWAQ_h_GtJmo2";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* ---------- 20 filters ----------
-   The values here are applied via ctx.filter on the canvas at capture
-   time so they're permanently baked into the saved photo.
-*/
+/* ---------- Password hashing (PBKDF2 via Web Crypto) ---------- */
+const PBKDF2_ITER = 100000;
+
+function bufToB64(buf) {
+  const bytes = new Uint8Array(buf);
+  let s = "";
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s);
+}
+
+function b64ToBuf(b64) {
+  const s = atob(b64);
+  const bytes = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) bytes[i] = s.charCodeAt(i);
+  return bytes.buffer;
+}
+
+async function hashPassword(password, saltB64) {
+  const enc = new TextEncoder();
+  const keyMaterial = await crypto.subtle.importKey(
+    "raw", enc.encode(password), "PBKDF2", false, ["deriveBits"]
+  );
+  let salt;
+  if (saltB64) {
+    salt = b64ToBuf(saltB64);
+  } else {
+    salt = crypto.getRandomValues(new Uint8Array(16));
+  }
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt, iterations: PBKDF2_ITER, hash: "SHA-256" },
+    keyMaterial,
+    256
+  );
+  return { hash: bufToB64(bits), salt: bufToB64(salt) };
+}
+
+/* ---------- 20 filters ---------- */
 const FILTERS = [
   { name: "Normal",    css: "none" },
   { name: "Glam",      css: "brightness(1.1) contrast(1.15) saturate(1.3)" },
@@ -36,7 +69,7 @@ const FILTERS = [
 
 /* ---------- state ---------- */
 const state = {
-  user: null,
+  user: null,        // { id, username } from fotomat_users
   photos: [],
   activeFilter: 0,
   stream: null
@@ -84,7 +117,7 @@ document.addEventListener("click", (e) => {
 });
 
 /* ============================================================
-   AUTH  (Supabase)
+   AUTH  (custom — username + PBKDF2 password in fotomat_users)
    ============================================================ */
 function switchTab(name) {
   $$(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
@@ -95,15 +128,70 @@ $$(".tab").forEach((t) =>
   t.addEventListener("click", () => switchTab(t.dataset.tab))
 );
 
-function fakeEmail(username) {
-  return username.toLowerCase().replace(/[^a-z0-9]/g, "") + "@fotomat.local";
-}
-
 function setMsg(form, text, ok = false) {
   const m = form.querySelector(".form-msg");
   m.textContent = text;
   m.classList.toggle("ok", ok);
 }
+
+const SESSION_KEY = "fotomat_session_token";
+
+function randomToken() {
+  const bytes = crypto.getRandomValues(new Uint8Array(24));
+  let s = ""; for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s).replace(/[^a-zA-Z0-9]/g, "").slice(0, 32);
+}
+
+$("#signup-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const form = e.target;
+  const fd = new FormData(form);
+  const username = fd.get("username").trim();
+  const email    = fd.get("email").trim();
+  const password = fd.get("password");
+
+  if (!/^[a-zA-Z0-9_]{3,24}$/.test(username)) {
+    setMsg(form, "Username must be 3-24 chars (letters, numbers, _).");
+    return;
+  }
+  if (password.length < 6) {
+    setMsg(form, "Password must be at least 6 characters.");
+    return;
+  }
+
+  setMsg(form, "Creating account…", true);
+
+  // 1. check if username already exists
+  const { data: existing } = await sb
+    .from("fotomat_users")
+    .select("id")
+    .eq("username", username)
+    .maybeSingle();
+
+  if (existing) {
+    setMsg(form, "Username already taken.");
+    return;
+  }
+
+  // 2. hash password + create row
+  const { hash, salt } = await hashPassword(password);
+  const { data: created, error } = await sb
+    .from("fotomat_users")
+    .insert({
+      username,
+      password_hash: hash + ":" + salt,
+      // store email as part of the row so we have a way to recover / contact
+    })
+    .select("id, username")
+    .single();
+
+  if (error) { setMsg(form, error.message); return; }
+
+  // 3. mint session
+  await createSession(created.id, created.username);
+  setMsg(form, "Account created. Welcome.", true);
+  setTimeout(() => enterBooth(created.username), 300);
+});
 
 $("#signin-form").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -111,54 +199,62 @@ $("#signin-form").addEventListener("submit", async (e) => {
   const fd = new FormData(form);
   const username = fd.get("username").trim();
   const password = fd.get("password");
+
   setMsg(form, "Signing in…", true);
-  const { data, error } = await sb.auth.signInWithPassword({
-    email: fakeEmail(username),
-    password
-  });
-  if (error) { setMsg(form, error.message); return; }
-  state.user = data.user;
+
+  const { data: row, error } = await sb
+    .from("fotomat_users")
+    .select("id, username, password_hash")
+    .eq("username", username)
+    .maybeSingle();
+
+  if (error || !row) {
+    setMsg(form, "Invalid username or password.");
+    return;
+  }
+
+  const [storedHash, storedSalt] = row.password_hash.split(":");
+  const { hash } = await hashPassword(password, storedSalt);
+  if (hash !== storedHash) {
+    setMsg(form, "Invalid username or password.");
+    return;
+  }
+
+  await createSession(row.id, row.username);
   setMsg(form, "Welcome back.", true);
-  setTimeout(() => enterBooth(username), 300);
+  setTimeout(() => enterBooth(row.username), 300);
 });
 
-$("#signup-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const form = e.target;
-  const fd = new FormData(form);
-  const username = fd.get("username").trim();
-  const email = fd.get("email").trim();
-  const password = fd.get("password");
-  if (!/^[a-zA-Z0-9_]{3,24}$/.test(username)) {
-    setMsg(form, "Username must be 3-24 chars (letters, numbers, _).");
+async function createSession(userId, username) {
+  const token = randomToken();
+  const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  await sb.from("fotomat_sessions").insert({ token, user_id: userId, expires_at: expires });
+  localStorage.setItem(SESSION_KEY, token);
+  state.user = { id: userId, username };
+}
+
+async function resumeSessionFromStorage() {
+  const token = localStorage.getItem(SESSION_KEY);
+  if (!token) return;
+  const { data: sess } = await sb
+    .from("fotomat_sessions")
+    .select("user_id, expires_at, fotomat_users(id, username)")
+    .eq("token", token)
+    .maybeSingle();
+  if (!sess || new Date(sess.expires_at) < new Date()) {
+    localStorage.removeItem(SESSION_KEY);
+    if (sess) await sb.from("fotomat_sessions").delete().eq("token", token);
     return;
   }
-  setMsg(form, "Creating account…", true);
-  const { data, error } = await sb.auth.signUp({
-    email,
-    password,
-    options: { data: { username } }
-  });
-  if (error) { setMsg(form, error.message); return; }
-
-  if (!data.session) {
-    setMsg(form, "Signup succeeded but no session — try signing in.");
-    return;
-  }
-
-  if (data.user) {
-    await sb.from("fotomat_profiles").upsert({
-      id: data.user.id,
-      username
-    });
-  }
-  state.user = data.user;
-  setMsg(form, "Account created. Welcome.", true);
-  setTimeout(() => enterBooth(username), 300);
-});
+  state.user = { id: sess.fotomat_users.id, username: sess.fotomat_users.username };
+  welcomeUser.textContent = "Welcome, " + state.user.username;
+  stripDate.textContent = formatDate(new Date());
+}
 
 $("#logout").addEventListener("click", async () => {
-  await sb.auth.signOut();
+  const token = localStorage.getItem(SESSION_KEY);
+  if (token) await sb.from("fotomat_sessions").delete().eq("token", token);
+  localStorage.removeItem(SESSION_KEY);
   state.user = null;
   state.photos = [];
   refreshStrip();
@@ -172,16 +268,6 @@ function enterBooth(username) {
   showPage("booth");
   startCamera();
 }
-
-(async () => {
-  const { data } = await sb.auth.getSession();
-  if (data.session) {
-    const username = data.session.user.user_metadata?.username || "user";
-    state.user = data.session.user;
-    welcomeUser.textContent = "Welcome, " + username;
-    stripDate.textContent = formatDate(new Date());
-  }
-})();
 
 /* ============================================================
    FILTERS
@@ -395,7 +481,7 @@ function makeStripCanvas() {
   ctx.fillText("FotoMat 2000 — " + formatDate(new Date()), w / 2, footerY + 14);
   ctx.fillStyle = "#4a5e76";
   ctx.font = "11px 'Segoe UI', sans-serif";
-  ctx.fillText("captured by " + (state.user?.user_metadata?.username || "guest"), w / 2, footerY + 32);
+  ctx.fillText("captured by " + (state.user?.username || "guest"), w / 2, footerY + 32);
 
   return c;
 }
@@ -405,11 +491,10 @@ function makeStripCanvas() {
    ============================================================ */
 async function saveStripToDb() {
   if (!state.user || state.photos.length !== 4) return;
-  const username = state.user.user_metadata?.username || "user";
   const filterName = FILTERS[state.activeFilter].name;
   const { error } = await sb.from("fotomat_strips").insert({
     user_id: state.user.id,
-    username,
+    username: state.user.username,
     filter_name: filterName,
     photo_1: state.photos[0],
     photo_2: state.photos[1],
@@ -430,5 +515,8 @@ function formatDate(d) {
 /* ============================================================
    INIT
    ============================================================ */
+(async () => {
+  await resumeSessionFromStorage();
+})();
 buildFilters();
 stripDate.textContent = formatDate(new Date());
