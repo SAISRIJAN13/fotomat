@@ -41,7 +41,7 @@ async function hashPassword(password, saltB64) {
 }
 
 /* ============================================================
-   20 FILTERS — CSS filter params
+   20 FILTERS — filter params
    ============================================================ */
 const FILTERS = [
   { name: "Normal",   bright: 1.0,  contrast: 1.0,  sat: 1.0,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
@@ -80,9 +80,6 @@ function buildCSSFilter(p) {
   if (p.invert > 0) parts.push("invert(" + p.invert + ")");
   if (p.sepia > 0) parts.push("sepia(" + p.sepia + ")");
   if (p.blur > 0) parts.push("blur(" + p.blur + "px)");
-  if (p.tint[0] > 0 || p.tint[1] > 0 || p.tint[2] > 0) {
-    parts.push("sepia(" + (p.tint[0]*0.5+p.tint[1]*0.4+p.tint[2]*0.3) + ") hue-rotate(" + (Math.atan2(p.tint[2]-p.tint[0],p.tint[1]-p.tint[0])*180/Math.PI) + "deg)");
-  }
   return parts.length ? parts.join(" ") : "none";
 }
 
@@ -351,15 +348,14 @@ function takePhoto() {
     const canvas = document.createElement("canvas");
     canvas.width = w; canvas.height = h;
     const ctx = canvas.getContext("2d");
-    ctx.filter = buildCSSFilter(preset);
     ctx.save();
     ctx.translate(w, 0); ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0, w, h);
     ctx.restore();
-    if (preset.grain && preset.grain > 0) addGrain(ctx, w, h, preset.grain);
+    applyFilterToPixels(ctx, w, h, preset);
     state.photos.push(canvas.toDataURL("image/jpeg", 0.92));
   } catch (err) {
-    console.error("CSS filter failed:", err);
+    console.error("Filter failed:", err);
     alert("Filter error — " + err.message);
     const w = video.videoWidth || 640, h = video.videoHeight || 480;
     const tmp = document.createElement("canvas");
@@ -368,9 +364,75 @@ function takePhoto() {
     ctx.translate(w, 0); ctx.scale(-1, 1);
     ctx.drawImage(video, 0, 0, w, h);
     const preset = FILTERS[state.activeFilter];
-    if (preset.grain && preset.grain > 0) addGrain(ctx, w, h, preset.grain);
+    applyFilterToPixels(ctx, w, h, preset);
     state.photos.push(tmp.toDataURL("image/jpeg", 0.9));
   }
+}
+
+function applyFilterToPixels(ctx, w, h, p) {
+  const img = ctx.getImageData(0, 0, w, h);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    let r = d[i] / 255, g = d[i+1] / 255, b = d[i+2] / 255;
+    const nlum = 0.3*r + 0.59*g + 0.11*b;
+    r *= p.bright; g *= p.bright; b *= p.bright;
+    r = (r - 0.5) * p.contrast + 0.5;
+    g = (g - 0.5) * p.contrast + 0.5;
+    b = (b - 0.5) * p.contrast + 0.5;
+    r = nlum + p.sat * (r - nlum);
+    g = nlum + p.sat * (g - nlum);
+    b = nlum + p.sat * (b - nlum);
+    if (p.hue !== 0) {
+      const angle = (p.hue / 360) * Math.PI * 2;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      const nr = r * 0.213 + g * 0.715 + b * 0.072 + cos * (r * 0.787 - g * 0.715 + b * 0.072) + sin * (r * 0.213 - g * 0.072 + b * 0.787);
+      const ng = r * 0.213 + g * 0.715 + b * 0.072 + cos * (r * -0.213 + g * 0.285 + b * -0.072) + sin * (r * -0.213 + g * 0.715 + b * -0.787);
+      const nb = r * 0.213 + g * 0.715 + b * 0.072 + cos * (r * -0.213 + g * -0.715 + b * 0.928) + sin * (r * 0.787 + g * 0.072 + b * -0.172);
+      r = nr; g = ng; b = nb;
+    }
+    if (p.gray > 0) {
+      r += p.gray * (nlum - r);
+      g += p.gray * (nlum - g);
+      b += p.gray * (nlum - b);
+    }
+    if (p.invert > 0) { r = 1-r; g = 1-g; b = 1-b; }
+    if (p.sepia > 0) {
+      const tr = Math.min(1, r * (1-p.sepia) + (r*0.393+g*0.769+b*0.189)*p.sepia);
+      const tg = Math.min(1, g * (1-p.sepia) + (r*0.349+g*0.686+b*0.168)*p.sepia);
+      const tb = Math.min(1, b * (1-p.sepia) + (r*0.272+g*0.534+b*0.131)*p.sepia);
+      r = tr; g = tg; b = tb;
+    }
+    d[i] = Math.min(255, Math.max(0, r * 255));
+    d[i+1] = Math.min(255, Math.max(0, g * 255));
+    d[i+2] = Math.min(255, Math.max(0, b * 255));
+  }
+  ctx.putImageData(img, 0, 0);
+  if (p.blur > 0) boxBlur(ctx, w, h, Math.ceil(p.blur * 3));
+  if (p.grain && p.grain > 0) addGrain(ctx, w, h, p.grain);
+}
+
+function boxBlur(ctx, w, h, radius) {
+  const img = ctx.getImageData(0, 0, w, h);
+  const d = img.data;
+  const src = new Uint8ClampedArray(d);
+  const div = radius * 2 + 1;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let sumR = 0, sumG = 0, sumB = 0, sumA = 0;
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const nx = Math.min(w-1, Math.max(0, x+dx));
+          const ny = Math.min(h-1, Math.max(0, y+dy));
+          const idx = (ny * w + nx) * 4;
+          sumR += src[idx]; sumG += src[idx+1]; sumB += src[idx+2]; sumA += src[idx+3];
+        }
+      }
+      const idx = (y * w + x) * 4;
+      d[idx] = sumR / div; d[idx+1] = sumG / div; d[idx+2] = sumB / div; d[idx+3] = sumA / div;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
 }
 
 function addGrain(ctx, w, h, amount) {
