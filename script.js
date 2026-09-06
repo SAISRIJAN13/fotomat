@@ -894,12 +894,15 @@ function applyFilmStyle(filmKey) {
     frame.style.backgroundImage = "url(" + pat + ")";
     frame.style.backgroundRepeat = "repeat";
   } else {
-    frame.style.backgroundImage = "none";
+    frame.style.backgroundImage = "";
+    frame.style.backgroundRepeat = "";
   }
 
   $$(".strip-slot").forEach((slot) => {
     slot.style.background = f.slot;
     slot.style.borderColor = f.slotBorder;
+    slot.style.backgroundImage = "";
+    slot.style.backgroundRepeat = "";
     if (f.emojiBg) {
       const pat = makeEmojiPattern(f.emojiBg, 80, 80, 0.22);
       slot.style.backgroundImage = "url(" + pat + ")";
@@ -908,8 +911,6 @@ function applyFilmStyle(filmKey) {
       const pat = makePolkaPattern(f.polka.bg, f.polka.dots, 50, 50, 4);
       slot.style.backgroundImage = "url(" + pat + ")";
       slot.style.backgroundRepeat = "repeat";
-    } else {
-      slot.style.backgroundImage = "none";
     }
   });
 }
