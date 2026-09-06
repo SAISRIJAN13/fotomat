@@ -69,7 +69,7 @@ const FILTERS = [
 
 /* ---------- state ---------- */
 const state = {
-  user: null,        // { id, username } from fotomat_users
+  user: null,
   photos: [],
   activeFilter: 0,
   stream: null
@@ -147,50 +147,57 @@ $("#signup-form").addEventListener("submit", async (e) => {
   const form = e.target;
   const fd = new FormData(form);
   const username = fd.get("username").trim();
-  const email    = fd.get("email").trim();
   const password = fd.get("password");
 
   if (!/^[a-zA-Z0-9_]{3,24}$/.test(username)) {
     setMsg(form, "Username must be 3-24 chars (letters, numbers, _).");
     return;
   }
-  if (password.length < 6) {
+  if (!password || password.length < 6) {
     setMsg(form, "Password must be at least 6 characters.");
     return;
   }
 
   setMsg(form, "Creating account…", true);
+  try {
+    const { data: existing } = await sb
+      .from("fotomat_users")
+      .select("id")
+      .eq("username", username)
+      .maybeSingle();
 
-  // 1. check if username already exists
-  const { data: existing } = await sb
-    .from("fotomat_users")
-    .select("id")
-    .eq("username", username)
-    .maybeSingle();
+    if (existing) {
+      setMsg(form, "Username already taken.");
+      return;
+    }
 
-  if (existing) {
-    setMsg(form, "Username already taken.");
-    return;
+    const { hash, salt } = await hashPassword(password);
+    const { data: created, error } = await sb
+      .from("fotomat_users")
+      .insert({
+        username,
+        password_hash: hash + ":" + salt
+      })
+      .select("id, username")
+      .single();
+
+    if (error) {
+      setMsg(form, "Insert failed: " + error.message);
+      console.error("signup insert error:", error);
+      return;
+    }
+    if (!created) {
+      setMsg(form, "Insert returned no row (RLS may be blocking).");
+      return;
+    }
+
+    await createSession(created.id, created.username);
+    setMsg(form, "Account created. Welcome.", true);
+    setTimeout(() => enterBooth(created.username), 300);
+  } catch (err) {
+    setMsg(form, "Error: " + err.message);
+    console.error(err);
   }
-
-  // 2. hash password + create row
-  const { hash, salt } = await hashPassword(password);
-  const { data: created, error } = await sb
-    .from("fotomat_users")
-    .insert({
-      username,
-      password_hash: hash + ":" + salt,
-      // store email as part of the row so we have a way to recover / contact
-    })
-    .select("id, username")
-    .single();
-
-  if (error) { setMsg(form, error.message); return; }
-
-  // 3. mint session
-  await createSession(created.id, created.username);
-  setMsg(form, "Account created. Welcome.", true);
-  setTimeout(() => enterBooth(created.username), 300);
 });
 
 $("#signin-form").addEventListener("submit", async (e) => {
@@ -201,28 +208,32 @@ $("#signin-form").addEventListener("submit", async (e) => {
   const password = fd.get("password");
 
   setMsg(form, "Signing in…", true);
+  try {
+    const { data: row, error } = await sb
+      .from("fotomat_users")
+      .select("id, username, password_hash")
+      .eq("username", username)
+      .maybeSingle();
 
-  const { data: row, error } = await sb
-    .from("fotomat_users")
-    .select("id, username, password_hash")
-    .eq("username", username)
-    .maybeSingle();
+    if (error || !row) {
+      setMsg(form, "Invalid username or password.");
+      return;
+    }
 
-  if (error || !row) {
-    setMsg(form, "Invalid username or password.");
-    return;
+    const [storedHash, storedSalt] = (row.password_hash || "").split(":");
+    const { hash } = await hashPassword(password, storedSalt);
+    if (!storedHash || hash !== storedHash) {
+      setMsg(form, "Invalid username or password.");
+      return;
+    }
+
+    await createSession(row.id, row.username);
+    setMsg(form, "Welcome back.", true);
+    setTimeout(() => enterBooth(row.username), 300);
+  } catch (err) {
+    setMsg(form, "Error: " + err.message);
+    console.error(err);
   }
-
-  const [storedHash, storedSalt] = row.password_hash.split(":");
-  const { hash } = await hashPassword(password, storedSalt);
-  if (hash !== storedHash) {
-    setMsg(form, "Invalid username or password.");
-    return;
-  }
-
-  await createSession(row.id, row.username);
-  setMsg(form, "Welcome back.", true);
-  setTimeout(() => enterBooth(row.username), 300);
 });
 
 async function createSession(userId, username) {
