@@ -344,11 +344,11 @@ $("#shutter").addEventListener("click", async () => {
   shutter.disabled = true;
 
   while (state.photos.length < 4) {
-    await showBigCountdown(3);
+    await showBigCountdown(3, "Get ready");
     takePhoto();
     refreshStrip();
     if (state.photos.length < 4) {
-      await showBigCountdown(GAP_SECONDS);
+      await showBigCountdown(GAP_SECONDS, "Next shot in");
     }
   }
 
@@ -358,12 +358,12 @@ $("#shutter").addEventListener("click", async () => {
   await saveStripToDb();
 });
 
-function showBigCountdown(seconds) {
+function showBigCountdown(seconds, label) {
   return new Promise((resolve) => {
     bigTimer.classList.add("show");
     let remaining = seconds;
     bigTimer.textContent = remaining;
-    setTimerPill("Next shot: " + remaining + "s", true);
+    setTimerPill(label + ": " + remaining + "s", true);
 
     const id = setInterval(() => {
       remaining--;
@@ -375,7 +375,7 @@ function showBigCountdown(seconds) {
         resolve();
       } else {
         bigTimer.textContent = remaining;
-        setTimerPill("Next shot: " + remaining + "s", true);
+        setTimerPill(label + ": " + remaining + "s", true);
       }
     }, 1000);
   });
