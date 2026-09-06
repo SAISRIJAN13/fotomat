@@ -1,162 +1,277 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FotoMat 2000</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css"/>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FotoMat 2000 — Online Photobooth</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="style.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 </head>
 <body>
-<!-- =================== LANDING =================== -->
-<div id="landing" class="page active">
-  <div class="stars"></div>
-  <div class="stars2"></div>
-  <div class="hero">
-    <h1 class="brand">FotoMat 2000</h1>
-    <p class="tagline">Your nostalgic photobooth experience</p>
-    <button class="btn btn-primary" data-nav="auth" data-mode="signup">Get Started</button>
+
+<!-- =================== TOP BAR =================== -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-name">FotoMat <em>2000</em></span>
+      <span class="brand-tag">Online Photobooth</span>
+    </div>
+    <nav class="topnav">
+      <a class="nav-link active" data-nav="landing">Home</a>
+      <a class="nav-link" data-nav="auth">Sign In</a>
+      <a class="nav-link" data-nav="booth">Booth</a>
+    </nav>
   </div>
-  <section class="features">
-    <div class="feature-card"><div class="icon">📸</div><h3>4-Shot Strips</h3><p>Capture 4 photos in a classic film strip layout</p></div>
-    <div class="feature-card"><div class="icon">🎨</div><h3>20 Filters</h3><p>Apply stunning CSS filters to your photos</p></div>
-    <div class="feature-card"><div class="icon">🖼️</div><h3>28 Film Styles</h3><p>Choose from solid colors, gradients, and emoji background frames</p></div>
-    <div class="feature-card"><div class="icon">⭐</div><h3>Stickers</h3><p>Drag and drop emoji and image stickers onto your photos</p></div>
-    <div class="feature-card"><div class="icon">⏱️</div><h3>Custom Timer</h3><p>Set 3s, 5s, or 10s countdown between shots</p></div>
-    <div class="feature-card"><div class="icon">💾</div><h3>Download</h3><p>Save your strips as high-quality JPG files</p></div>
-  </section>
-  <footer class="site-footer"><p>FotoMat 2000 &mdash; captured by SAISRIJAN13</p></footer>
-</div>
+</header>
+
+<!-- =================== LANDING =================== -->
+<section id="landing" class="page active">
+  <div class="hero">
+    <div class="hero-card">
+      <div class="hero-title">
+        <h1>Welcome to FotoMat</h1>
+        <p class="subtitle">A classic four-shot photobooth, right in your browser.</p>
+      </div>
+      <div class="hero-features">
+        <div class="feature">
+          <div class="feature-icon">4</div>
+          <h3>Four shots</h3>
+          <p>Stacked into a printable strip.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">★</div>
+          <h3>Twenty filters</h3>
+          <p>Vintage, neon, noir and more.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">↓</div>
+          <h3>Downloadable</h3>
+          <p>Save your strip as a JPG.</p>
+        </div>
+      </div>
+      <div class="hero-cta">
+        <button class="btn btn-primary" data-nav="auth">Start shooting</button>
+        <button class="btn btn-secondary" data-nav="auth" data-mode="signin">I have an account</button>
+      </div>
+    </div>
+
+    <div class="hero-side">
+      <div class="preview-window">
+        <div class="window-titlebar">
+          <span class="dot dot-r"></span>
+          <span class="dot dot-y"></span>
+          <span class="dot dot-g"></span>
+          <span class="window-title">Preview</span>
+        </div>
+        <div class="preview-body">
+          <div class="preview-strip">
+            <div class="preview-shot"></div>
+            <div class="preview-shot"></div>
+            <div class="preview-shot"></div>
+            <div class="preview-shot"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content-row">
+    <div class="panel">
+      <h2 class="panel-title">How it works</h2>
+      <ol class="how-list">
+        <li>Create an account or sign in.</li>
+        <li>Allow camera access.</li>
+        <li>Pick a filter, then press the shutter.</li>
+        <li>Choose your timer (3s, 5s, or 10s) and wait between shots.</li>
+        <li>Download your finished strip.</li>
+      </ol>
+    </div>
+    <div class="panel">
+      <h2 class="panel-title">Tips</h2>
+      <ul class="how-list">
+        <li>Filters are baked into the photo at capture time.</li>
+        <li>Drag stickers onto your strip to decorate it.</li>
+        <li>Choose a film style for your strip color/theme.</li>
+        <li>Save a single shot or the full 4-up strip.</li>
+      </ul>
+    </div>
+  </div>
+</section>
 
 <!-- =================== AUTH =================== -->
-<div id="auth" class="page">
-  <div class="stars"></div>
-  <div class="stars2"></div>
-  <div class="auth-panel">
-    <div class="panel-header">
-      <div class="window-chrome"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
-      <h2>FotoMat 2000</h2>
+<section id="auth" class="page">
+  <div class="auth-shell">
+    <div class="window">
+      <div class="window-titlebar">
+        <span class="dot dot-r"></span>
+        <span class="dot dot-y"></span>
+        <span class="dot dot-g"></span>
+        <span class="window-title">Member Access</span>
+      </div>
+      <div class="window-body">
+        <h2 class="auth-heading">Sign in to continue</h2>
+
+        <div class="tabbar">
+          <button class="tab active" data-tab="signin">Sign In</button>
+          <button class="tab" data-tab="signup">Create Account</button>
+        </div>
+
+        <form id="signin-form" class="auth-form active">
+          <label>Username
+            <input type="text" name="username" required autocomplete="username" />
+          </label>
+          <label>Password
+            <input type="password" name="password" required autocomplete="current-password" />
+          </label>
+          <button type="submit" class="btn btn-primary block">Sign in</button>
+          <p class="form-msg"></p>
+        </form>
+
+        <form id="signup-form" class="auth-form">
+          <label>Username
+            <input type="text" name="username" required maxlength="24" autocomplete="username" />
+          </label>
+          <label>Email
+            <input type="email" name="email" required autocomplete="email" />
+          </label>
+          <label>Password
+            <input type="password" name="password" required minlength="6" autocomplete="new-password" />
+          </label>
+          <button type="submit" class="btn btn-primary block">Create account</button>
+          <p class="form-msg"></p>
+        </form>
+      </div>
     </div>
-    <div class="tabs">
-      <button class="tab active" data-tab="signin">Sign In</button>
-      <button class="tab" data-tab="signup">Sign Up</button>
-    </div>
-    <form id="signin-form" class="auth-form active">
-      <div class="field"><label>Username</label><input name="username" required autocomplete="username"/></div>
-      <div class="field"><label>Password</label><input name="password" type="password" required autocomplete="current-password"/></div>
-      <p class="form-msg"></p>
-      <button class="btn btn-primary" type="submit">Sign In</button>
-    </form>
-    <form id="signup-form" class="auth-form">
-      <div class="field"><label>Username</label><input name="username" required autocomplete="username"/></div>
-      <div class="field"><label>Password</label><input name="password" type="password" required autocomplete="new-password"/></div>
-      <p class="form-msg"></p>
-      <button class="btn btn-primary" type="submit">Create Account</button>
-    </form>
-    <a class="back-link" data-nav="landing">Back to Home</a>
   </div>
-</div>
+</section>
 
 <!-- =================== BOOTH =================== -->
-<div id="booth" class="page">
-  <div class="stars"></div>
-  <div class="stars2"></div>
-  <nav class="booth-nav">
-    <span class="brand-sm">FotoMat 2000</span>
-    <span id="welcome-user">Welcome</span>
-    <button class="btn btn-secondary" id="logout">Sign Out</button>
-  </nav>
-
-  <div class="booth-layout">
-    <!-- CAMERA COLUMN -->
-    <div class="cam-col">
-      <div class="camera-box">
-        <div id="noise-overlay"></div>
-        <video id="video" autoplay playsinline muted></video>
-        <div id="flash"></div>
-        <div id="big-timer"></div>
+<section id="booth" class="page">
+  <div class="booth-shell">
+    <div class="booth-header">
+      <h2 class="booth-title">The Booth</h2>
+      <div class="booth-meta">
+        <span class="welcome-user" id="welcome-user">Welcome, guest</span>
+        <button class="btn btn-secondary btn-small" id="logout">Log out</button>
       </div>
-      <div id="timer-pill" class="pill live">Loading…</div>
-
-      <!-- TIMER + SHUTTER ROW -->
-      <div class="shutter-row">
-        <div class="timer-options">
-          <button class="timer-btn" data-sec="3">3s</button>
-          <button class="timer-btn active" data-sec="5">5s</button>
-          <button class="timer-btn" data-sec="10">10s</button>
-        </div>
-        <button id="shutter" class="btn btn-primary shutter-btn" disabled>Take 4 Shots</button>
-      </div>
-
-      <!-- FILTERS -->
-      <h3 class="section-title">Filters</h3>
-      <div id="filter-grid" class="filter-grid"></div>
     </div>
 
-    <!-- STRIP COLUMN -->
-    <div class="strip-col">
-      <div id="strip" class="strip-frame">
-        <div class="strip-slot empty" data-i="0"><span>1</span><div class="slot-stickers"></div></div>
-        <div class="strip-slot empty" data-i="1"><span>2</span><div class="slot-stickers"></div></div>
-        <div class="strip-slot empty" data-i="2"><span>3</span><div class="slot-stickers"></div></div>
-        <div class="strip-slot empty" data-i="3"><span>4</span><div class="slot-stickers"></div></div>
-        <div class="strip-footer">
-          <span id="welcome-user">Welcome</span> &bull; <span id="strip-date"></span>
+    <div class="booth-grid">
+      <!-- CAMERA -->
+      <div class="window camera-window">
+        <div class="window-titlebar">
+          <span class="dot dot-r"></span>
+          <span class="dot dot-y"></span>
+          <span class="dot dot-g"></span>
+          <span class="window-title">Live Preview</span>
+          <span class="timer-pill" id="timer-pill">Ready</span>
+        </div>
+        <div class="window-body camera-body">
+          <div class="screen">
+            <video id="video" autoplay playsinline muted></video>
+            <div class="noise-overlay" id="noise-overlay"></div>
+            <div class="flash" id="flash"></div>
+            <div class="reticle"></div>
+            <div class="big-timer" id="big-timer"></div>
+          </div>
+
+          <div class="timer-options">
+            <span class="section-title" style="margin-top:0;border:none;padding:0;">Timer</span>
+            <div class="timer-btn-group">
+              <button class="timer-btn" data-sec="3">3s</button>
+              <button class="timer-btn" data-sec="5">5s</button>
+              <button class="timer-btn active" data-sec="10">10s</button>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button class="btn btn-primary btn-shutter" id="shutter" disabled>● Take 4 Shots</button>
+
+          </div>
+
+          <div class="sticker-section">
+            <h3 class="section-title">Stickers — drag to your strip</h3>
+            <div class="sticker-palette" id="sticker-palette"></div>
+          </div>
+
+          <div class="film-section">
+            <h3 class="section-title">Film Selection</h3>
+            <div class="film-palette" id="film-palette">
+              <button class="film-swatch active" data-film="classic" title="Classic Black" style="background:#1a1a2e;"></button>
+              <button class="film-swatch" data-film="white" title="Clean White" style="background:#fdfdfd;border-color:#aaa;"></button>
+              <button class="film-swatch" data-film="pink" title="Pink" style="background:#f9a8d4;"></button>
+              <button class="film-swatch" data-film="yellow" title="Yellow" style="background:#fde68a;"></button>
+              <button class="film-swatch" data-film="red" title="Red" style="background:#f87171;"></button>
+              <button class="film-swatch" data-film="blue" title="Blue" style="background:#93c5fd;"></button>
+              <button class="film-swatch" data-film="purple" title="Purple" style="background:#c4b5fd;"></button>
+              <button class="film-swatch" data-film="mint" title="Mint" style="background:#6ee7b7;"></button>
+              <button class="film-swatch" data-film="peach" title="Peach" style="background:#fed7aa;"></button>
+              <button class="film-swatch" data-film="lavender" title="Lavender" style="background:#ddd6fe;"></button>
+              <button class="film-swatch" data-film="vintage" title="Vintage" style="background:linear-gradient(135deg,#d4a574,#c4956a);"></button>
+              <button class="film-swatch" data-film="galaxy" title="Galaxy" style="background:linear-gradient(135deg,#1e1b4b,#4c1d95,#7c3aed);"></button>
+              <button class="film-swatch" data-film="coral" title="Coral Sunset" style="background:linear-gradient(180deg,#ffccbc,#ff8a80);"></button>
+              <button class="film-swatch" data-film="aurora" title="Aurora" style="background:linear-gradient(135deg,#1b5e20,#00bcd4,#7c4dff);"></button>
+              <button class="film-swatch" data-film="roseGold" title="Rose Gold" style="background:linear-gradient(180deg,#f8bbd0,#e8b4b8,#d4a0a0);"></button>
+              <button class="film-swatch" data-film="ocean" title="Ocean" style="background:linear-gradient(180deg,#80deea,#26c6da,#00acc1);"></button>
+              <button class="film-swatch" data-film="cyberpunk" title="Cyberpunk" style="background:linear-gradient(135deg,#ff00ff,#0a0a2e,#00ffff);"></button>
+              <button class="film-swatch" data-film="cottonCandy" title="Cotton Candy" style="background:linear-gradient(180deg,#f8bbd0,#e1bee7,#b3e5fc);"></button>
+              <button class="film-swatch" data-film="emerald" title="Emerald" style="background:linear-gradient(180deg,#a5d6a7,#66bb6a);"></button>
+              <button class="film-swatch" data-film="midnight" title="Midnight" style="background:linear-gradient(135deg,#0d0d2b,#1a1a4e,#2d1b69);"></button>
+              <button class="film-swatch" data-film="romance" title="Romance (hearts)" style="background:repeating-conic-gradient(#ff6b8a 0% 25%, #ffe0e6 0% 50%) 0 0/12px 12px;"></button>
+              <button class="film-swatch" data-film="celebration" title="Celebration (party)" style="background:repeating-conic-gradient(#fbbf24 0% 25%, #fef3c7 0% 50%) 0 0/12px 12px;"></button>
+              <button class="film-swatch" data-film="nature" title="Nature (flowers)" style="background:repeating-conic-gradient(#66bb6a 0% 25%, #c8e6c9 0% 50%) 0 0/12px 12px;"></button>
+              <button class="film-swatch" data-film="cosmic" title="Cosmic (stars & moons)" style="background:linear-gradient(135deg,#0d0d2b,#1a1a4e,#0d47a1);"></button>
+              <button class="film-swatch" data-film="summer" title="Summer (palm trees)" style="background:linear-gradient(180deg,#fff9c4,#81d4fa,#4fc3f7);"></button>
+              <button class="film-swatch" data-film="music" title="Music (notes)" style="background:repeating-conic-gradient(#ab47bc 0% 25%, #e1bee7 0% 50%) 0 0/12px 12px;"></button>
+              <button class="film-swatch" data-film="sweets" title="Sweets (donuts & ice cream)" style="background:linear-gradient(180deg,#fce4ec,#f3e5f5,#e8eaf6);"></button>
+              <button class="film-swatch" data-film="space" title="Space (rockets)" style="background:linear-gradient(135deg,#000033,#000066,#191970);"></button>
+              <button class="film-swatch" data-film="emojiRain" title="Emoji Rain" style="background:repeating-conic-gradient(#42a5f5 0% 25%, #bbdefb 0% 50%) 0 0/12px 12px;"></button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- FILM SELECTION -->
-      <h3 class="section-title">Film</h3>
-      <div id="film-grid" class="film-grid">
-        <button class="film-swatch active" data-film="classic" title="Classic" style="background: linear-gradient(180deg, #f0f2f6, #e0e4ea);"></button>
-        <button class="film-swatch" data-film="white" title="White" style="background: #fdfdfd;"></button>
-        <button class="film-swatch" data-film="pink" title="Pink" style="background: linear-gradient(180deg, #fce4ec, #f8bbd0);"></button>
-        <button class="film-swatch" data-film="yellow" title="Yellow" style="background: linear-gradient(180deg, #fff9c4, #fff176);"></button>
-        <button class="film-swatch" data-film="red" title="Red" style="background: linear-gradient(180deg, #ffebee, #ffcdd2);"></button>
-        <button class="film-swatch" data-film="blue" title="Blue" style="background: linear-gradient(180deg, #e3f2fd, #bbdefb);"></button>
-        <button class="film-swatch" data-film="purple" title="Purple" style="background: linear-gradient(180deg, #ede7f6, #d1c4e9);"></button>
-        <button class="film-swatch" data-film="mint" title="Mint" style="background: linear-gradient(180deg, #e0f2f1, #b2dfdb);"></button>
-        <button class="film-swatch" data-film="peach" title="Peach" style="background: linear-gradient(180deg, #fff3e0, #ffe0b2);"></button>
-        <button class="film-swatch" data-film="lavender" title="Lavender" style="background: linear-gradient(180deg, #f3e5f5, #e1bee7);"></button>
-        <button class="film-swatch" data-film="vintage" title="Vintage" style="background: linear-gradient(180deg, #efebe9, #d7ccc8);"></button>
-        <button class="film-swatch" data-film="galaxy" title="Galaxy" style="background: linear-gradient(135deg, #1a1a2e, #0f3460);"></button>
-        <button class="film-swatch" data-film="coral" title="Coral" style="background: linear-gradient(180deg, #fff1e6, #ff8a80);"></button>
-        <button class="film-swatch" data-film="aurora" title="Aurora" style="background: linear-gradient(135deg, #1b5e20, #00bcd4, #7c4dff);"></button>
-        <button class="film-swatch" data-film="roseGold" title="Rose Gold" style="background: linear-gradient(180deg, #fce4ec, #d4a0a0);"></button>
-        <button class="film-swatch" data-film="ocean" title="Ocean" style="background: linear-gradient(180deg, #e0f7fa, #00acc1);"></button>
-        <button class="film-swatch" data-film="cyberpunk" title="Cyberpunk" style="background: linear-gradient(135deg, #ff00ff, #0a0a2e, #00ffff);"></button>
-        <button class="film-swatch" data-film="cottonCandy" title="Cotton Candy" style="background: linear-gradient(180deg, #f8bbd0, #e1bee7, #b3e5fc, #c8e6c9);"></button>
-        <button class="film-swatch" data-film="emerald" title="Emerald" style="background: linear-gradient(180deg, #e8f5e9, #66bb6a);"></button>
-        <button class="film-swatch" data-film="midnight" title="Midnight" style="background: linear-gradient(135deg, #0d0d2b, #2d1b69);"></button>
-        <button class="film-swatch" data-film="romance" title="Romance" style="background: linear-gradient(180deg, #fce4ec, #f8bbd0);"><span class="film-emoji">❤️</span></button>
-        <button class="film-swatch" data-film="celebration" title="Celebration" style="background: linear-gradient(180deg, #fff8e1, #ffecb3);"><span class="film-emoji">🎉</span></button>
-        <button class="film-swatch" data-film="nature" title="Nature" style="background: linear-gradient(180deg, #e8f5e9, #c8e6c9);"><span class="film-emoji">🌸</span></button>
-        <button class="film-swatch" data-film="cosmic" title="Cosmic" style="background: linear-gradient(135deg, #0d0d2b, #1a1a4e);"><span class="film-emoji">🌟</span></button>
-        <button class="film-swatch" data-film="summer" title="Summer" style="background: linear-gradient(180deg, #fff9c4, #4fc3f7);"><span class="film-emoji">☀️</span></button>
-        <button class="film-swatch" data-film="music" title="Music" style="background: linear-gradient(180deg, #f3e5f5, #e1bee7);"><span class="film-emoji">🎵</span></button>
-        <button class="film-swatch" data-film="sweets" title="Sweets" style="background: linear-gradient(180deg, #fce4ec, #e8eaf6);"><span class="film-emoji">🍩</span></button>
-        <button class="film-swatch" data-film="space" title="Space" style="background: linear-gradient(135deg, #000033, #191970);"><span class="film-emoji">🚀</span></button>
-        <button class="film-swatch" data-film="emojiRain" title="Emoji Rain" style="background: linear-gradient(180deg, #e3f2fd, #bbdefb);"><span class="film-emoji">😀</span></button>
-      </div>
+      <!-- FILTERS + STRIP -->
+      <div class="window booth-side">
+        <div class="window-titlebar">
+          <span class="dot dot-r"></span>
+          <span class="dot dot-y"></span>
+          <span class="dot dot-g"></span>
+          <span class="window-title">Filters &amp; Strip</span>
+        </div>
+        <div class="window-body">
+          <h3 class="section-title">Choose a filter</h3>
+          <div class="filter-grid" id="filter-grid"></div>
 
-      <!-- STICKERS -->
-      <h3 class="section-title">Stickers <small>(drag onto photo)</small></h3>
-      <div id="sticker-palette" class="sticker-palette"></div>
+          <h3 class="section-title">Your strip</h3>
+          <div class="strip-frame">
+            <div class="strip" id="strip">
+              <div class="strip-slot empty" data-i="0"><span>1</span><div class="slot-stickers"></div></div>
+              <div class="strip-slot empty" data-i="1"><span>2</span><div class="slot-stickers"></div></div>
+              <div class="strip-slot empty" data-i="2"><span>3</span><div class="slot-stickers"></div></div>
+              <div class="strip-slot empty" data-i="3"><span>4</span><div class="slot-stickers"></div></div>
+            </div>
+            <div class="strip-footer">FotoMat 2000 — <span id="strip-date"></span></div>
+          </div>
 
-      <!-- ACTIONS -->
-      <div class="action-row">
-        <button id="download" class="btn btn-primary" disabled>Download Strip</button>
-        <button id="download-single" class="btn btn-secondary" disabled>Download Last Snap</button>
-        <button id="reset-strip" class="btn btn-secondary">Reset Strip</button>
+          <div class="strip-actions">
+            <button class="btn btn-primary" id="download" disabled>Download strip</button>
+            <button class="btn btn-secondary btn-small" id="download-single" disabled>Save last shot</button>
+            <button class="btn btn-secondary btn-small" id="reset-strip">New strip</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+</section>
 
-  <footer class="site-footer"><p>FotoMat 2000 &mdash; captured by SAISRIJAN13</p></footer>
-</div>
+<!-- footer -->
+<footer class="site-footer">
+  <span>FotoMat 2000 · est. 2026 · built by srijan</span>
+</footer>
 
 <script src="stickers-data.js"></script>
 <script src="script.js"></script>
