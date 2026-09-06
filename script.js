@@ -531,7 +531,7 @@ resetStripBtn.addEventListener("click", () => {
   setTimerPill("Ready", false);
 });
 function makeStripCanvas() {
-  const w = 480, pad = 10, shotH = (w - pad * 2) * 3 / 4, h = shotH * 4 + pad * 2 + 60;
+  const w = 480, pad = 12, shotH = (w - pad * 2) * 3 / 4, h = shotH * 4 + pad * 2 + 60;
   const c = document.createElement("canvas"); c.width = w; c.height = h;
   const ctx = c.getContext("2d");
   const f = FILM_STYLES[state.film] || FILM_STYLES.classic;
