@@ -531,30 +531,33 @@ resetStripBtn.addEventListener("click", () => {
   setTimerPill("Ready", false);
 });
 function makeStripCanvas() {
-  const w = 480, pad = 12, shotH = (w - pad * 2) * 3 / 4, h = shotH * 4 + pad * 2 + 60;
-  const c = document.createElement("canvas"); c.width = w; c.height = h;
-  const ctx = c.getContext("2d");
-  const f = FILM_STYLES[state.film] || FILM_STYLES.classic;
+  var w = 480, pad = 12, gap = 6, innerPad = 4;
+  var slotW = w - pad * 2;
+  var shotH = (slotW) * 3 / 4;
+  var totalH = shotH * 4 + gap * 3 + pad * 2 + 60;
+  var c = document.createElement("canvas"); c.width = w; c.height = totalH;
+  var ctx = c.getContext("2d");
+  var f = FILM_STYLES[state.film] || FILM_STYLES.classic;
 
-  /* parse gradient string or solid color — handles "linear-gradient(180deg, #a 0%, #b 100%)" */
+  /* parse gradient string or solid color */
   function drawBackground(style, x, y, width, height) {
     if (!style) { ctx.fillStyle = "#e0e4ea"; ctx.fillRect(x, y, width, height); return; }
-    const gradMatch = style.match(/linear-gradient\(([^)]+)\)/);
+    var gradMatch = style.match(/linear-gradient\(([^)]+)\)/);
     if (gradMatch) {
-      const parts = gradMatch[1].split(",").map(s => s.trim());
-      const angle = parts[0].includes("deg") ? parseFloat(parts[0]) : 180;
-      const colorParts = parts.filter(p => p.includes("#"));
-      const rad = (angle - 90) * Math.PI / 180;
-      const cx1 = x + width / 2 - Math.cos(rad) * width;
-      const cy1 = y + height / 2 - Math.sin(rad) * height;
-      const cx2 = x + width / 2 + Math.cos(rad) * width;
-      const cy2 = y + height / 2 + Math.sin(rad) * height;
-      const grad = ctx.createLinearGradient(cx1, cy1, cx2, cy2);
-      colorParts.forEach((cp, i) => {
-        const hexMatch = cp.match(/#[0-9a-fA-F]{3,8}/);
-        const col = hexMatch ? hexMatch[0] : cp;
-        const pctMatch = cp.match(/(\d+(?:\.\d+)?)\s*%/);
-        const pct = pctMatch ? parseFloat(pctMatch[1]) / 100 : i / Math.max(colorParts.length - 1, 1);
+      var parts = gradMatch[1].split(",").map(function(s) { return s.trim(); });
+      var angle = parts[0].includes("deg") ? parseFloat(parts[0]) : 180;
+      var colorParts = parts.filter(function(p) { return p.includes("#"); });
+      var rad = (angle - 90) * Math.PI / 180;
+      var cx1 = x + width / 2 - Math.cos(rad) * width;
+      var cy1 = y + height / 2 - Math.sin(rad) * height;
+      var cx2 = x + width / 2 + Math.cos(rad) * width;
+      var cy2 = y + height / 2 + Math.sin(rad) * height;
+      var grad = ctx.createLinearGradient(cx1, cy1, cx2, cy2);
+      colorParts.forEach(function(cp, i) {
+        var hexMatch = cp.match(/#[0-9a-fA-F]{3,8}/);
+        var col = hexMatch ? hexMatch[0] : cp;
+        var pctMatch = cp.match(/(\d+(?:\.\d+)?)\s*%/);
+        var pct = pctMatch ? parseFloat(pctMatch[1]) / 100 : i / Math.max(colorParts.length - 1, 1);
         grad.addColorStop(pct, col);
       });
       ctx.fillStyle = grad;
@@ -564,24 +567,24 @@ function makeStripCanvas() {
     ctx.fillRect(x, y, width, height);
   }
 
-  /* draw strip frame background (full canvas) */
-  drawBackground(f.frame, 0, 0, w, h);
+  /* 1. Draw strip frame background (full canvas) */
+  drawBackground(f.frame, 0, 0, w, totalH);
 
-  /* draw emoji background if present */
+  /* 2. Draw emoji background on frame */
   if (f.emojiBg) {
     ctx.save();
     ctx.globalAlpha = 0.18;
-    const count = 40 + Math.floor(Math.random() * 20);
-    for (let i = 0; i < count; i++) {
-      const em = f.emojiBg[Math.floor(Math.random() * f.emojiBg.length)];
-      const x = Math.random() * w;
-      const y = Math.random() * h;
-      const size = 16 + Math.floor(Math.random() * 14);
-      ctx.font = size + "px serif";
+    var cnt = 40 + Math.floor(Math.random() * 20);
+    for (var ei = 0; ei < cnt; ei++) {
+      var em = f.emojiBg[Math.floor(Math.random() * f.emojiBg.length)];
+      var ex = Math.random() * w;
+      var ey = Math.random() * totalH;
+      var sz = 16 + Math.floor(Math.random() * 14);
+      ctx.font = sz + "px serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.save();
-      ctx.translate(x, y);
+      ctx.translate(ex, ey);
       ctx.rotate((Math.random() - 0.5) * 0.6);
       ctx.fillText(em, 0, 0);
       ctx.restore();
@@ -589,52 +592,52 @@ function makeStripCanvas() {
     ctx.restore();
   }
 
-  /* draw polka dot background if present */
+  /* 3. Draw polka dot background on frame */
   if (f.polka) {
     ctx.save();
     ctx.globalAlpha = 0.8;
-    const dotSize = 4;
-    const spacing = 12;
-    for (let x = 0; x < w; x += spacing) {
-      for (let y = 0; y < h; y += spacing) {
-        const dotColor = f.polka.dots[Math.floor(Math.random() * f.polka.dots.length)];
-        ctx.fillStyle = dotColor;
+    var pdSize = 4;
+    var pdSpacing = 12;
+    for (var px = 0; px < w; px += pdSpacing) {
+      for (var py = 0; py < totalH; py += pdSpacing) {
+        ctx.fillStyle = f.polka.dots[Math.floor(Math.random() * f.polka.dots.length)];
         ctx.beginPath();
-        ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+        ctx.arc(px, py, pdSize, 0, Math.PI * 2);
         ctx.fill();
       }
     }
     ctx.restore();
   }
 
-  /* preload all photo images, then draw everything */
-  const loadedPhotos = state.photos.map(src => {
-    const img = new Image(); img.src = src; return img;
+  /* preload all photo images */
+  var loadedPhotos = state.photos.map(function(src) {
+    var img = new Image(); img.src = src; return img;
   });
 
-  /* draw slot backgrounds, photos, stickers, borders */
-  state.photos.forEach((src, i) => {
-    const y = pad + i * shotH;
-    /* draw slot background */
-    drawBackground(f.slot, pad, y, w - pad * 2, shotH);
+  /* 4. Draw each slot: background → photo → stickers → border */
+  state.photos.forEach(function(src, i) {
+    var slotY = pad + i * (shotH + gap);
+
+    /* draw slot background (full slot area — shows behind photo as border) */
+    drawBackground(f.slot, pad, slotY, slotW, shotH);
 
     /* draw emoji overlay in slot */
     if (f.emojiBg) {
       ctx.save();
       ctx.globalAlpha = 0.22;
-      const count = 8 + Math.floor(Math.random() * 6);
-      for (let j = 0; j < count; j++) {
-        const em = f.emojiBg[Math.floor(Math.random() * f.emojiBg.length)];
-        const ex = pad + Math.random() * (w - pad * 2);
-        const ey = y + Math.random() * shotH;
-        const size = 12 + Math.floor(Math.random() * 10);
-        ctx.font = size + "px serif";
+      var sc = 8 + Math.floor(Math.random() * 6);
+      for (var si = 0; si < sc; si++) {
+        var se = f.emojiBg[Math.floor(Math.random() * f.emojiBg.length)];
+        var sex = pad + Math.random() * slotW;
+        var sey = slotY + Math.random() * shotH;
+        var ssz = 12 + Math.floor(Math.random() * 10);
+        ctx.font = ssz + "px serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.save();
-        ctx.translate(ex, ey);
+        ctx.translate(sex, sey);
         ctx.rotate((Math.random() - 0.5) * 0.5);
-        ctx.fillText(em, 0, 0);
+        ctx.fillText(se, 0, 0);
         ctx.restore();
       }
       ctx.restore();
@@ -644,32 +647,35 @@ function makeStripCanvas() {
     if (f.polka) {
       ctx.save();
       ctx.globalAlpha = 0.7;
-      const dotSize = 3;
-      const spacing = 10;
-      for (let px = pad; px < w - pad; px += spacing) {
-        for (let py = y; py < y + shotH; py += spacing) {
-          const dotColor = f.polka.dots[Math.floor(Math.random() * f.polka.dots.length)];
-          ctx.fillStyle = dotColor;
+      var ps = 3;
+      var pspace = 10;
+      for (var spx = pad; spx < pad + slotW; spx += pspace) {
+        for (var spy = slotY; spy < slotY + shotH; spy += pspace) {
+          ctx.fillStyle = f.polka.dots[Math.floor(Math.random() * f.polka.dots.length)];
           ctx.beginPath();
-          ctx.arc(px, py, dotSize, 0, Math.PI * 2);
+          ctx.arc(spx, spy, ps, 0, Math.PI * 2);
           ctx.fill();
         }
       }
       ctx.restore();
     }
 
-    /* draw photo */
-    ctx.drawImage(loadedPhotos[i], pad, y, w - pad * 2, shotH);
+    /* draw photo — inset by innerPad so slot background shows as border */
+    var photoX = pad + innerPad;
+    var photoY = slotY + innerPad;
+    var photoW = slotW - innerPad * 2;
+    var photoH = shotH - innerPad * 2;
+    ctx.drawImage(loadedPhotos[i], photoX, photoY, photoW, photoH);
 
     /* draw stickers */
-    state.stickers[i].forEach((st) => {
-      const sx = pad + (st.x / 100) * (w - pad * 2);
-      const sy = y + (st.y / 100) * shotH;
+    state.stickers[i].forEach(function(st) {
+      var sx = photoX + (st.x / 100) * photoW;
+      var sy = photoY + (st.y / 100) * photoH;
       if (st.type === "image" && st.src) {
-        const stickerImg = new Image();
+        var stickerImg = new Image();
         stickerImg.src = st.src;
-        const sW = 80, sH = (stickerImg.naturalHeight / stickerImg.naturalWidth) * sW || 60;
-        ctx.drawImage(stickerImg, sx - sW / 2, sy - sH / 2, sW, sH);
+        var sW = 80, sH2 = (stickerImg.naturalHeight / stickerImg.naturalWidth) * sW || 60;
+        ctx.drawImage(stickerImg, sx - sW / 2, sy - sH2 / 2, sW, sH2);
       } else {
         ctx.font = "36px serif";
         ctx.textAlign = "center";
@@ -681,11 +687,11 @@ function makeStripCanvas() {
     /* draw slot border */
     ctx.strokeStyle = f.slotBorder;
     ctx.lineWidth = 2;
-    ctx.strokeRect(pad, y, w - pad * 2, shotH);
+    ctx.strokeRect(pad, slotY, slotW, shotH);
   });
 
   /* draw footer */
-  const footerY = pad + shotH * 4;
+  var footerY = pad + shotH * 4 + gap * 3;
   drawBackground(f.footerBg, 0, footerY, w, 60);
   ctx.fillStyle = "#1e6dbf"; ctx.font = "bold 16px 'Segoe UI', sans-serif";
   ctx.textAlign = "center";
