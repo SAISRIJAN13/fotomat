@@ -7,6 +7,51 @@ const SUPABASE_URL = "https://adjnzwcpwkiudqvavqgz.supabase.co";
 const SUPABASE_KEY = "sb_publishable_eGJ1Ttm1DU3RZclfHOoWAQ_h_GtJmo2";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+/* ---------- Mechanical keyboard click sound ---------- */
+let _clickCtx = null;
+function getClickCtx() {
+  if (!_clickCtx) _clickCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return _clickCtx;
+}
+function playKeyClick() {
+  const ctx = getClickCtx();
+  if (ctx.state === "suspended") ctx.resume();
+  const now = ctx.currentTime;
+
+  /* short noise burst (keycap hit) */
+  const bufLen = ctx.sampleRate * 0.015 | 0;
+  const noiseBuf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+  const nd = noiseBuf.getChannelData(0);
+  for (let i = 0; i < bufLen; i++) nd[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufLen, 3);
+  const noise = ctx.createBufferSource();
+  noise.buffer = noiseBuf;
+  const noiseGain = ctx.createGain();
+  noiseGain.gain.setValueAtTime(0.28, now);
+  noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+  const hp = ctx.createBiquadFilter();
+  hp.type = "highpass"; hp.frequency.value = 1200;
+  noise.connect(hp).connect(noiseGain).connect(ctx.destination);
+  noise.start(now);
+  noise.stop(now + 0.04);
+
+  /* sine thud (housing resonance) */
+  const osc = ctx.createOscillator();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(380, now);
+  osc.frequency.exponentialRampToValueAtTime(120, now + 0.03);
+  const oscGain = ctx.createGain();
+  oscGain.gain.setValueAtTime(0.18, now);
+  oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+  osc.connect(oscGain).connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.045);
+}
+
+/* attach click sound to all buttons */
+document.addEventListener("click", (e) => {
+  if (e.target.closest(".btn")) playKeyClick();
+});
+
 /* ---------- Password hashing (PBKDF2 via Web Crypto) ---------- */
 const PBKDF2_ITER = 100000;
 
