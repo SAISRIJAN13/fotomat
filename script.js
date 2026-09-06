@@ -344,12 +344,11 @@ $("#shutter").addEventListener("click", async () => {
   shutter.disabled = true;
 
   while (state.photos.length < 4) {
-    await showBigCountdown(3, "Get ready");
-    takePhoto();
-    refreshStrip();
-    if (state.photos.length < 4) {
+    if (state.photos.length > 0) {
       await showBigCountdown(GAP_SECONDS, "Next shot in");
     }
+    takePhoto();
+    refreshStrip();
   }
 
   shutter.disabled = false;
