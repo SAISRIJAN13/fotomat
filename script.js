@@ -1,5 +1,5 @@
 /* ============================================================
-   FotoMat 2000 — Custom auth + WebGL filter pipeline
+   FotoMat 2000 — Custom auth + CSS filter pipeline
    ============================================================ */
 
 /* ---------- Supabase ---------- */
@@ -41,153 +41,45 @@ async function hashPassword(password, saltB64) {
 }
 
 /* ============================================================
-   20 FILTERS + WebGL pipeline
+   20 FILTERS — CSS filter params
    ============================================================ */
 const FILTERS = [
-  { name: "Normal",   filter: 0,  bright: 1.0,  contrast: 1.0,  sat: 1.0,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "Glam",     filter: 1,  bright: 1.1,  contrast: 1.0,  sat: 1.3,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "Grunge",   filter: 2,  bright: 0.95, contrast: 1.3,  sat: 1.0,  hue: 0,   gray: 0.6,invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "VHS",      filter: 3,  bright: 1.0,  contrast: 1.2,  sat: 1.6,  hue: -10, gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "B&W",      filter: 4,  bright: 1.1,  contrast: 1.1,  sat: 0,    hue: 0,   gray: 1,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "Sepia",    filter: 5,  bright: 1.05, contrast: 1.05, sat: 1.0,  hue: 0,   gray: 0,  invert: 0, sepia: 0.8,blur: 0,  tint: [0.9,0.75,0.55] },
-  { name: "Cold",     filter: 6,  bright: 1.05, contrast: 1.0,  sat: 1.2,  hue: 180, gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "Warm",     filter: 7,  bright: 1.05, contrast: 1.0,  sat: 1.4,  hue: -30, gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "Fade",     filter: 8,  bright: 1.15, contrast: 0.85, sat: 0.7,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "Punch",    filter: 9,  bright: 1.0,  contrast: 1.4,  sat: 1.5,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "Dreamy",   filter: 10, bright: 1.15, contrast: 1.0,  sat: 1.3,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 1.2,tint: [0,0,0] },
-  { name: "Invert",   filter: 11, bright: 1.0,  contrast: 1.0,  sat: 1.0,  hue: 0,   gray: 0,  invert: 1, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "Chrome",   filter: 12, bright: 1.1,  contrast: 1.5,  sat: 0.2,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "Neon",     filter: 13, bright: 1.2,  contrast: 1.3,  sat: 2.2,  hue: 15,  gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "Xmas",     filter: 14, bright: 1.05, contrast: 1.0,  sat: 1.5,  hue: 90,  gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "Halloween",filter: 15, bright: 0.9,  contrast: 1.2,  sat: 1.4,  hue: -90, gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "Matrix",   filter: 16, bright: 0.85, contrast: 1.4,  sat: 3.0,  hue: 90,  gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "Vintage",  filter: 17, bright: 1.05, contrast: 0.95, sat: 1.2,  hue: 0,   gray: 0,  invert: 0, sepia: 0.4,blur: 0, tint: [0,0,0] },
-  { name: "Xray",     filter: 18, bright: 1.0,  contrast: 1.5,  sat: 1.0,  hue: 0,   gray: 1,  invert: 1, sepia: 0,  blur: 0,  tint: [0,0,0] },
-  { name: "Pop",      filter: 19, bright: 1.05, contrast: 1.25, sat: 2.0,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] }
+  { name: "Normal",   bright: 1.0,  contrast: 1.0,  sat: 1.0,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "Glam",     bright: 1.1,  contrast: 1.0,  sat: 1.3,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "Grunge",   bright: 0.95, contrast: 1.3,  sat: 1.0,  hue: 0,   gray: 0.6,invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "VHS",      bright: 1.0,  contrast: 1.2,  sat: 1.6,  hue: -10, gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "B&W",      bright: 1.1,  contrast: 1.1,  sat: 0,    hue: 0,   gray: 1,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "Sepia",    bright: 1.05, contrast: 1.05, sat: 1.0,  hue: 0,   gray: 0,  invert: 0, sepia: 0.8,blur: 0,  tint: [0.9,0.75,0.55] },
+  { name: "Cold",     bright: 1.05, contrast: 1.0,  sat: 1.2,  hue: 180, gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "Warm",     bright: 1.05, contrast: 1.0,  sat: 1.4,  hue: -30, gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "Fade",     bright: 1.15, contrast: 0.85, sat: 0.7,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "Punch",    bright: 1.0,  contrast: 1.4,  sat: 1.5,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "Dreamy",   bright: 1.15, contrast: 1.0,  sat: 1.3,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 1.2,tint: [0,0,0] },
+  { name: "Invert",   bright: 1.0,  contrast: 1.0,  sat: 1.0,  hue: 0,   gray: 0,  invert: 1, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "Chrome",   bright: 1.1,  contrast: 1.5,  sat: 0.2,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "Neon",     bright: 1.2,  contrast: 1.3,  sat: 2.2,  hue: 15,  gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "Xmas",     bright: 1.05, contrast: 1.0,  sat: 1.5,  hue: 90,  gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "Halloween",bright: 0.9,  contrast: 1.2,  sat: 1.4,  hue: -90, gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "Matrix",   bright: 0.85, contrast: 1.4,  sat: 3.0,  hue: 90,  gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "Vintage",  bright: 1.05, contrast: 0.95, sat: 1.2,  hue: 0,   gray: 0,  invert: 0, sepia: 0.4,blur: 0, tint: [0,0,0] },
+  { name: "Xray",     bright: 1.0,  contrast: 1.5,  sat: 1.0,  hue: 0,   gray: 1,  invert: 1, sepia: 0,  blur: 0,  tint: [0,0,0] },
+  { name: "Pop",      bright: 1.05, contrast: 1.25, sat: 2.0,  hue: 0,   gray: 0,  invert: 0, sepia: 0,  blur: 0,  tint: [0,0,0] }
 ];
 
-const VERT_SRC = `
-  attribute vec2 aPos;
-  varying vec2 vUv;
-  void main() {
-    vUv = aPos * 0.5 + 0.5;
-    gl_Position = vec4(aPos, 0.0, 1.0);
-  }`;
-
-const FRAG_SRC = `
-  precision mediump float;
-  varying vec2 vUv;
-  uniform sampler2D uTex;
-  uniform int uFilter;
-  uniform float uBright;
-  uniform float uContrast;
-  uniform float uSat;
-  uniform float uHue;
-  uniform float uGray;
-  uniform float uInvert;
-  uniform float uSepia;
-  uniform float uBlur;
-  uniform vec3 uTint;
-
-  vec3 rgb2hsv(vec3 c) {
-    vec4 K = vec4(0.0, -1.0/3.0, 2.0/3.0, -1.0);
-    vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
-    vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
-    float d = q.x - min(q.w, q.y);
-    float e = 1.0e-10;
-    return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+function buildCSSFilter(p) {
+  const parts = [];
+  if (p.bright !== 1.0) parts.push("brightness(" + p.bright + ")");
+  if (p.contrast !== 1.0) parts.push("contrast(" + p.contrast + ")");
+  if (p.sat !== 1.0) parts.push("saturate(" + p.sat + ")");
+  if (p.hue !== 0) parts.push("hue-rotate(" + p.hue + "deg)");
+  if (p.gray > 0) parts.push("grayscale(" + p.gray + ")");
+  if (p.invert > 0) parts.push("invert(" + p.invert + ")");
+  if (p.sepia > 0) parts.push("sepia(" + p.sepia + ")");
+  if (p.blur > 0) parts.push("blur(" + p.blur + "px)");
+  if (p.tint[0] > 0 || p.tint[1] > 0 || p.tint[2] > 0) {
+    parts.push("sepia(" + (p.tint[0]*0.5+p.tint[1]*0.4+p.tint[2]*0.3) + ") hue-rotate(" + (Math.atan2(p.tint[2]-p.tint[0],p.tint[1]-p.tint[0])*180/Math.PI) + "deg)");
   }
-  vec3 hsv2rgb(vec3 c) {
-    vec4 K = vec4(1.0, 2.0/3.0, 1.0/3.0, 3.0);
-    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-  }
-
-  void main() {
-    vec4 col = texture2D(uTex, vUv);
-    if (uInvert > 0.5) col.rgb = 1.0 - col.rgb;
-    col.rgb = vec3(mix(col.rgb, vec3(dot(col.rgb, vec3(0.3))), uGray));
-    col.rgb = col.rgb * (0.3 + 0.7 * uSepia) + uTint * uSepia;
-    col.rgb *= uBright;
-    col.rgb = (col.rgb - 0.5) * uContrast + 0.5;
-    col.rgb *= uSat;
-    float h = (hsv2rgb(col.rgb).x + uHue / 360.0);
-    h = fract(h);
-    col.rgb = hsv2rgb(vec3(h, col.rgb.y, col.rgb.z));
-    if (uFilter == 1)       col.rgb *= 1.1;
-    else if (uFilter == 2)  col.rgb = (col.rgb - 0.5) * 1.3 + 0.5; col.rgb *= 0.95;
-    else if (uFilter == 4)  col.rgb += vec3(0.0, 0.05, 0.1);
-    else if (uFilter == 5)  col.rgb += vec3(0.1, 0.03, 0.0);
-    else if (uFilter == 6)  col.rgb = mix(col.rgb, vec3(0.9), 0.3);
-    else if (uFilter == 7)  col.rgb = pow(col.rgb, vec3(0.85));
-    else if (uFilter == 10) col.rgb *= 1.15;
-    else if (uFilter == 11) { float lum = dot(col.rgb, vec3(0.3)); col.rgb = mix(col.rgb, vec3(lum), 0.5); }
-    else if (uFilter == 12) col.rgb = pow(col.rgb, vec3(0.45)); col.rgb = clamp(col.rgb * 1.2, 0.0, 1.0);
-    else if (uFilter == 13) { col.rgb.r *= 0.7; col.rgb.g *= 1.2; col.rgb.b *= 0.3; }
-    else if (uFilter == 14) { col.rgb.r *= 1.3; col.rgb.g *= 0.8; col.rgb.b *= 0.2; }
-    else if (uFilter == 15) { col.rgb.r *= 0.3; col.rgb.g *= 1.3; col.rgb.b *= 0.2; }
-    else if (uFilter == 16) col.rgb = mix(col.rgb, vec3(0.8,0.75,0.6), 0.2);
-    else if (uFilter == 17) { col.rgb = 1.0 - col.rgb; col.rgb = vec3(dot(col.rgb, vec3(0.3))); }
-    else if (uFilter == 18) col.rgb = pow(col.rgb, vec3(0.8));
-    gl_FragColor = vec4(col.rgb, 1.0);
-  }`;
-
-let gl = null, program = null, buf = null, tex = null;
-
-function initWebGL(w, h) {
-  const off = document.createElement("canvas");
-  off.width = w; off.height = h;
-  gl = off.getContext("webgl", { preserveDrawingBuffer: true, alpha: false });
-  if (!gl) return false;
-  gl.viewport(0, 0, w, h);
-  const vs = gl.createShader(gl.VERTEX_SHADER);
-  gl.shaderSource(vs, VERT_SRC);
-  gl.compileShader(vs);
-  if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) { console.error("vs", gl.getShaderInfoLog(vs)); return false; }
-  const fs = gl.createShader(gl.FRAGMENT_SHADER);
-  gl.shaderSource(fs, FRAG_SRC);
-  gl.compileShader(fs);
-  if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) { console.error("fs", gl.getShaderInfoLog(fs)); return false; }
-  program = gl.createProgram();
-  gl.attachShader(program, vs); gl.attachShader(program, fs); gl.linkProgram(program);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) { console.error("link", gl.getProgramInfoLog(program)); return false; }
-  gl.useProgram(program);
-  buf = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
-  const aPos = gl.getAttribLocation(program, "aPos");
-  gl.enableVertexAttribArray(aPos);
-  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
-  tex = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, tex);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  return true;
-}
-
-function renderFilter(video, preset) {
-  const w = video.videoWidth || 640;
-  const h = video.videoHeight || 480;
-  if (!gl || !program) initWebGL(w, h);
-  gl.viewport(0, 0, w, h);
-  gl.bindTexture(gl.TEXTURE_2D, tex);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
-  const L = (n) => gl.getUniformLocation(program, n);
-  gl.uniform1i(L("uTex"), 0);
-  gl.uniform1i(L("uFilter"), preset.filter);
-  gl.uniform1f(L("uBright"), preset.bright);
-  gl.uniform1f(L("uContrast"), preset.contrast);
-  gl.uniform1f(L("uSat"), preset.sat);
-  gl.uniform1f(L("uHue"), preset.hue);
-  gl.uniform1f(L("uGray"), preset.gray);
-  gl.uniform1f(L("uInvert"), preset.invert);
-  gl.uniform1f(L("uSepia"), preset.sepia);
-  gl.uniform1f(L("uBlur"), preset.blur);
-  gl.uniform3fv(L("uTint"), new Float32Array(preset.tint));
-  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-  return gl.canvas.toDataURL("image/jpeg", 0.92);
+  return parts.length ? parts.join(" ") : "none";
 }
 
 /* ============================================================
@@ -368,6 +260,8 @@ async function startCamera() {
 function stopCamera() {
   if (state.stream) { state.stream.getTracks().forEach((t) => t.stop()); state.stream = null; }
   video.srcObject = null;
+  shutter.disabled = true;
+  setTimerPill("Stopped", true);
 }
 $("#start-cam").addEventListener("click", () => startCamera());
 
@@ -376,8 +270,24 @@ $("#start-cam").addEventListener("click", () => startCamera());
    ============================================================ */
 const GAP_SECONDS = 10;
 $("#shutter").addEventListener("click", async () => {
-  if (!state.stream || shutter.disabled) return;
-  if (state.photos.length >= 4) return;
+  if (!state.stream) {
+    try {
+      state.stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+        audio: false
+      });
+      video.srcObject = state.stream;
+      await video.play();
+      shutter.disabled = false;
+      setTimerPill("Ready", false);
+    } catch (err) {
+      shutter.disabled = true;
+      setTimerPill("No camera", true);
+      alert("Camera access denied or unavailable.\n\n" + err.message);
+      return;
+    }
+  }
+  if (shutter.disabled || state.photos.length >= 4) return;
   shutter.disabled = true;
   while (state.photos.length < 4) {
     if (state.photos.length > 0) {
@@ -423,10 +333,19 @@ function takePhoto() {
   flashEl.classList.add("active");
   try {
     const preset = FILTERS[state.activeFilter];
-    const dataURL = renderFilter(video, preset);
-    state.photos.push(dataURL);
+    const w = video.videoWidth || 640;
+    const h = video.videoHeight || 480;
+    const canvas = document.createElement("canvas");
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    ctx.save();
+    ctx.translate(w, 0); ctx.scale(-1, 1);
+    ctx.filter = buildCSSFilter(preset);
+    ctx.drawImage(video, 0, 0, w, h);
+    ctx.restore();
+    state.photos.push(canvas.toDataURL("image/jpeg", 0.92));
   } catch (err) {
-    console.error("WebGL filter failed:", err);
+    console.error("CSS filter failed:", err);
     alert("Filter error — " + err.message);
     const w = video.videoWidth || 640, h = video.videoHeight || 480;
     const tmp = document.createElement("canvas");
@@ -454,7 +373,11 @@ function refreshStrip() {
 $("#reset").addEventListener("click", () => {
   if (state.photos.length === 0) return;
   if (!confirm("Clear all shots?")) return;
-  state.photos = []; refreshStrip(); hideBigTimer(); setTimerPill("Ready", false);
+  state.photos = [];
+  refreshStrip();
+  hideBigTimer();
+  stopCamera();
+  setTimerPill("Click Take 4 Shots to start", true);
 });
 
 /* ============================================================
@@ -528,3 +451,4 @@ function formatDate(d) {
 })();
 buildFilters();
 stripDate.textContent = formatDate(new Date());
+setTimerPill("Click Take 4 Shots to start", true);
