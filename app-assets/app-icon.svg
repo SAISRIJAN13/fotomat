@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#17223b"/>
+      <stop offset="55%" stop-color="#0d1526"/>
+      <stop offset="100%" stop-color="#080d1a"/>
+    </linearGradient>
+    <linearGradient id="strip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f5f7fb"/>
+      <stop offset="100%" stop-color="#d8deea"/>
+    </linearGradient>
+    <linearGradient id="brandBlue" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#5a9ed8"/>
+      <stop offset="50%" stop-color="#2a66a0"/>
+      <stop offset="100%" stop-color="#1e5a94"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+
+  <!-- Stars (subtle, like the app background) -->
+  <g fill="#ffffff">
+    <circle cx="120" cy="130" r="4" opacity="0.7"/>
+    <circle cx="250" cy="70" r="3" opacity="0.5"/>
+    <circle cx="900" cy="110" r="4" opacity="0.7"/>
+    <circle cx="800" cy="250" r="3" opacity="0.5"/>
+    <circle cx="140" cy="880" r="4" opacity="0.6"/>
+    <circle cx="90" cy="420" r="3" opacity="0.4"/>
+    <circle cx="940" cy="760" r="4" opacity="0.6"/>
+    <circle cx="940" cy="430" r="3" opacity="0.5"/>
+    <circle cx="330" cy="900" r="3" opacity="0.45"/>
+    <circle cx="700" cy="920" r="4" opacity="0.55"/>
+    <circle cx="440" cy="150" r="3" opacity="0.4"/>
+    <circle cx="620" cy="80" r="3.5" opacity="0.5"/>
+  </g>
+
+  <!-- Film strip -->
+  <g>
+    <!-- Outer strip -->
+    <rect x="292" y="212" width="440" height="600" rx="22" fill="url(#strip)" stroke="#8a96a4" stroke-width="3"/>
+    <rect x="292" y="212" width="440" height="600" rx="22" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.5"/>
+
+    <!-- Sprocket holes left -->
+    <g fill="#1a2434">
+      <rect x="314" y="250" width="18" height="12" rx="3"/>
+      <rect x="314" y="298" width="18" height="12" rx="3"/>
+      <rect x="314" y="346" width="18" height="12" rx="3"/>
+      <rect x="314" y="394" width="18" height="12" rx="3"/>
+      <rect x="314" y="442" width="18" height="12" rx="3"/>
+      <rect x="314" y="490" width="18" height="12" rx="3"/>
+      <rect x="314" y="538" width="18" height="12" rx="3"/>
+    </g>
+    <!-- Sprocket holes right -->
+    <g fill="#1a2434">
+      <rect x="692" y="250" width="18" height="12" rx="3"/>
+      <rect x="692" y="298" width="18" height="12" rx="3"/>
+      <rect x="692" y="346" width="18" height="12" rx="3"/>
+      <rect x="692" y="394" width="18" height="12" rx="3"/>
+      <rect x="692" y="442" width="18" height="12" rx="3"/>
+      <rect x="692" y="490" width="18" height="12" rx="3"/>
+      <rect x="692" y="538" width="18" height="12" rx="3"/>
+    </g>
+
+    <!-- Four shots -->
+    <g>
+      <!-- shot 1 : retro pink -->
+      <rect x="356" y="244" width="312" height="123" rx="8" fill="#ec407a"/>
+      <circle cx="430" cy="305" r="26" fill="#f8bbd0" opacity="0.85"/>
+      <circle cx="596" cy="305" r="20" fill="#fce4ec" opacity="0.9"/>
+      <!-- shot 2 : retro blue -->
+      <rect x="356" y="381" width="312" height="123" rx="8" fill="#1e88e5"/>
+      <rect x="400" y="420" width="80" height="45" rx="4" fill="#bbdefb" opacity="0.85"/>
+      <rect x="540" y="420" width="84" height="45" rx="4" fill="#e3f2fd" opacity="0.9"/>
+      <!-- shot 3 : retro amber -->
+      <rect x="356" y="518" width="312" height="123" rx="8" fill="#f9a825"/>
+      <circle cx="430" cy="580" r="24" fill="#fff176" opacity="0.9"/>
+      <path d="M596 558 l14 30 32 5 -23 22 5 32 -28 -15 -28 15 5 -32 -23 -22 32 -5 z" fill="#fff9c4" opacity="0.9"/>
+      <!-- shot 4 : retro purple -->
+      <rect x="356" y="655" width="312" height="123" rx="8" fill="#8e24aa"/>
+      <path d="M420 730 l28 -22 28 22 -11 -36 29 -23 -36 -3 -10 -35 -10 35 -36 3 29 23 z" fill="#e1bee7" opacity="0.9"/>
+      <circle cx="602" cy="716" r="18" fill="#ce93d8" opacity="0.85"/>
+    </g>
+  </g>
+
+  <!-- Brand -->
+  <g>
+    <text x="512" y="888" font-family="Georgia, 'Times New Roman', serif" font-size="88" font-style="italic" fill="#f2f5fa" text-anchor="middle">FotoMat</text>
+    <text x="512" y="955" font-family="Arial, Helvetica, sans-serif" font-size="52" font-weight="bold" fill="#5a9ed8" text-anchor="middle" letter-spacing="14">2000</text>
+  </g>
+</svg>

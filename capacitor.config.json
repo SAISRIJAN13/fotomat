@@ -1,0 +1,8 @@
+{
+  "appId": "com.fotomat.app",
+  "appName": "FotoMat 2000",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
