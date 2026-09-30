@@ -246,6 +246,7 @@ body::after {
    BUTTONS
    ============================================================ */
 .btn {
+  display: inline-block;
   font: 600 13px/1 "Segoe UI", Tahoma, sans-serif;
   padding: 8px 18px;
   border-radius: 4px;
