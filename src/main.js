@@ -2,21 +2,8 @@
    FotoMat 2000 — Custom auth + CSS filter pipeline
    ============================================================ */
 
-/* ---------- Native imports (Capacitor 5) ---------- */
-import { Capacitor } from '@capacitor/core';
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-import { Share } from '@capacitor/share';
-import { LocalNotifications } from '@capacitor/local-notifications';
-import { Filesystem, Directory } from '@capacitor/filesystem';
-import { App } from '@capacitor/app';
-import { Haptics, ImpactStyle } from '@capacitor/haptics';
-import { Preferences } from '@capacitor/preferences';
-import { NativeBiometric } from '@capgo/capacitor-native-biometric';
-import { createClient } from '@supabase/supabase-js';
-
-const IS_NATIVE = Capacitor.isNativePlatform();
-
 /* ---------- Supabase ---------- */
+import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = "https://adjnzwcpwkiudqvavqgz.supabase.co";
 const SUPABASE_KEY = "sb_publishable_eGJ1Ttm1DU3RZclfHOoWAQ_h_GtJmo2";
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -28,11 +15,6 @@ function getClickCtx() {
   return _clickCtx;
 }
 function playKeyClick() {
-  /* On native: use haptic feedback instead of audio */
-  if (IS_NATIVE) {
-    Haptics.impact({ style: ImpactStyle.Light }).catch(() => {});
-    return;
-  }
   const ctx = getClickCtx();
   if (ctx.state === "suspended") ctx.resume();
   const now = ctx.currentTime;
@@ -311,8 +293,6 @@ function setFilter(i) {
    ============================================================ */
 async function startCamera() {
   if (state.stream) return;
-  /* On native: camera opens at capture time via Camera.getPhoto() */
-  if (IS_NATIVE) { state.cameraReady = true; shutter.disabled = false; setTimerPill("Ready", false); return; }
   try {
     state.stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
@@ -344,7 +324,7 @@ function stopCamera() {
    ============================================================ */
 const GAP_SECONDS = 10;
 $("#shutter").addEventListener("click", async () => {
-  if (!state.stream && !IS_NATIVE) {
+  if (!state.stream) {
     try {
       state.stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
@@ -406,39 +386,6 @@ async function takePhoto() {
   flashEl.classList.remove("active");
   void flashEl.offsetWidth;
   flashEl.classList.add("active");
-
-  if (IS_NATIVE) {
-    try {
-      const photo = await Camera.getPhoto({
-        quality: 90,
-        allowEditing: false,
-        resultType: CameraResultType.DataUrl,
-        source: CameraSource.Camera,
-        saveToGallery: false,
-        correctOrientation: true,
-        width: 1920,
-        height: 1440
-      });
-      if (!photo.dataUrl) return;
-      const img = new Image();
-      await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = photo.dataUrl; });
-      const preset = FILTERS[state.activeFilter];
-      const w = img.naturalWidth || 640, h = img.naturalHeight || 480;
-      const canvas = document.createElement("canvas");
-      canvas.width = w; canvas.height = h;
-      const ctx = canvas.getContext("2d");
-      ctx.save();
-      ctx.translate(w, 0); ctx.scale(-1, 1);
-      ctx.drawImage(img, 0, 0, w, h);
-      ctx.restore();
-      applyFilterToPixels(ctx, w, h, preset);
-      state.photos.push(canvas.toDataURL("image/jpeg", 0.92));
-      return;
-    } catch (err) {
-      console.error("Native camera error:", err);
-      return;
-    }
-  }
 
   try {
     const preset = FILTERS[state.activeFilter];
@@ -569,24 +516,6 @@ downloadBtn.addEventListener("click", () => {
   shareOrDownload(dataUrl, "fotomat-" + Date.now() + ".jpg");
 });
 async function shareOrDownload(dataUrl, fileName) {
-  if (IS_NATIVE) {
-    try {
-      const base64 = dataUrl.split(",")[1];
-      const file = await Filesystem.writeFile({
-        path: fileName,
-        data: base64,
-        directory: Directory.Cache
-      });
-      await Share.share({
-        title: "My FotoMat 2000 strip",
-        text: "Made with FotoMat 2000 — Online Photobooth",
-        files: [file.uri]
-      });
-    } catch (err) {
-      console.error("Share failed:", err);
-    }
-    return;
-  }
   const a = document.createElement("a");
   a.href = dataUrl; a.download = fileName; a.click();
 }
@@ -1152,91 +1081,9 @@ function applyFilmStyle(filmKey) {
 }
 
 /* ============================================================
-   NATIVE (Capacitor) — notifications, biometrics, lifecycle
-   ============================================================ */
-async function requestNotificationPermission() {
-  if (!IS_NATIVE) return "granted";
-  try {
-    const perm = await LocalNotifications.requestPermissions();
-    return perm.display;
-  } catch (err) { console.error("Notif perm:", err); return "denied"; }
-}
-async function scheduleReminder() {
-  if (!IS_NATIVE) return;
-  const perm = await requestNotificationPermission();
-  if (perm !== "granted") return;
-  try {
-    await LocalNotifications.schedule({
-      notifications: [{
-        title: "FotoMat 2000",
-        body: "Time to take some photos! Your photobooth is waiting.",
-        id: 1,
-        schedule: { at: new Date(Date.now() + 24 * 60 * 60 * 1000) },
-        presentationOptions: ["badge", "sound", "banner"]
-      }]
-    });
-  } catch (err) { console.error("Schedule notif:", err); }
-}
-
-/* Biometric convenience login on native */
-async function isBiometricAvailable() {
-  if (!IS_NATIVE) return false;
-  try {
-    const r = await NativeBiometric.isAvailable();
-    return !!r.isAvailable;
-  } catch { return false; }
-}
-async function authenticateWithBiometric() {
-  if (!IS_NATIVE) return false;
-  try {
-    await NativeBiometric.verifyIdentity({
-      reason: "Authenticate to access FotoMat 2000",
-      title: "FotoMat Login",
-      subtitle: "Use your biometric to sign in",
-      description: "Verify your identity to continue",
-      fallbackTitle: "Use Passcode"
-    });
-    return true;
-  } catch (err) { console.error("Biometric auth failed:", err); return false; }
-}
-async function saveCredentialsNative(username, password) {
-  if (!IS_NATIVE) return;
-  try {
-    await NativeBiometric.setCredentials({ username, password, service: "com.fotomat.app" });
-  } catch (err) { console.error("Save creds:", err); }
-}
-async function getCredentialsNative() {
-  if (!IS_NATIVE) return null;
-  try {
-    return await NativeBiometric.getCredentials({ service: "com.fotomat.app" });
-  } catch { return null; }
-}
-
-/* Persistent session via Preferences on native (localStorage fallback on web) */
-async function saveSessionPrefs(token) { if (IS_NATIVE) await Preferences.set({ key: SESSION_KEY, value: token }); }
-async function loadSessionPrefs() { if (!IS_NATIVE) return null; const r = await Preferences.get({ key: SESSION_KEY }); return r.value; }
-async function clearSessionPrefs() { if (IS_NATIVE) await Preferences.remove({ key: SESSION_KEY }); }
-
-/* App lifecycle */
-if (IS_NATIVE) {
-  App.addListener("appStateChange", ({ isActive }) => {
-    if (!isActive) saveSessionPrefs(localStorage.getItem(SESSION_KEY) || "");
-  });
-  App.addListener("backButton", ({ canGoBack }) => {
-    if (document.querySelector("#booth.active")) { showPage("landing"); }
-    else if (!canGoBack) { App.exitApp(); }
-  });
-}
-
-/* ============================================================
    INIT
    ============================================================ */
 (async () => {
-  if (IS_NATIVE) {
-    const prefToken = await loadSessionPrefs();
-    if (prefToken && !localStorage.getItem(SESSION_KEY)) localStorage.setItem(SESSION_KEY, prefToken);
-    try { await LocalNotifications.requestPermissions(); } catch {}
-  }
   await resumeSessionFromStorage();
 })();
 buildFilters();
