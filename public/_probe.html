@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>probe</title></head>
+<body>
+<pre id="out">loading…</pre>
+<script>
+const out = [];
+const t = (k, v) => out.push(k + " = " + v);
+(async () => {
+  t("typeof navigator.mediaDevices", typeof navigator.mediaDevices);
+  t("typeof navigator.mediaDevices?.getUserMedia", typeof (navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
+  const canvas = document.createElement("canvas");
+  t("typeof canvas.toDataURL", typeof canvas.toDataURL);
+  const ctx = typeof canvas.getContext === "function" ? canvas.getContext("2d") : null;
+  t("typeof canvas.getContext", typeof canvas.getContext);
+  t("ctx null?", ctx === null);
+  if (ctx) {
+    t("typeof ctx.createPattern", typeof ctx.createPattern);
+    t("typeof ctx.drawImage", typeof ctx.drawImage);
+    t("typeof ctx.fillText", typeof ctx.fillText);
+    t("typeof ctx.filter set", typeof (ctx.filter = "blur(2px)"));
+  }
+  t("typeof Image", typeof Image);
+  t("typeof navigator.getUserMedia", typeof navigator.getUserMedia);
+  t("typeof navigator.mediaDevices?.getUserMedia (safe)", typeof (navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
+  const v = document.createElement("video");
+  v.srcObject = null;
+  t("video.srcObject setter ran?", "yes (no throw)");
+  t("typeof video.play", typeof v.play);
+  t("typeof Date.prototype.getDate", typeof Date.prototype.getDate);
+  t("typeof ctx.textBaseline (as ctx)", ctx ? typeof ctx.textBaseline : "n/a ctx missing");
+  document.getElementById("out").textContent = out.join("\n");
+})().catch(e => { document.getElementById("out").textContent = "ERROR: " + e; });
+</script>
+</body></html>
